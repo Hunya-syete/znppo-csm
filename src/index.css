@@ -1,0 +1,45 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --color-police-blue: #1e3a8a;
+  --color-police-blue-hover: #1d4ed8;
+  --color-police-gold: #b45309;
+  --color-police-gold-hover: #d97706;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: #f1f5f9; /* Slate 100 as specified in the theme fallback */
+  color: #1e293b; /* Slate 800 */
+}
+
+/* Custom Polish Theme classes for robust layout mappings */
+.stat-card-custom {
+  background: white;
+  border-left: 4px solid #1e3a8a;
+  padding: 1rem;
+  border-radius: 4px;
+}
+
+.qr-box-custom {
+  background: white;
+  border: 2px solid #000;
+  padding: 10px;
+  width: 140px;
+  height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.qr-box-custom::after {
+  content: '';
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  border: 3px solid #1e3a8a;
+}

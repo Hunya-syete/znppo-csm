@@ -1,0 +1,952 @@
+{
+  "locations": [
+    {
+      "id": "loc_phq",
+      "office_name": "Provincial Headquarters (PHQ)",
+      "office_code": "phq",
+      "qr_token": "tkn_phq_101",
+      "status": "active",
+      "created_at": "2026-05-01T08:00:00Z"
+    },
+    {
+      "id": "loc_teu",
+      "office_name": "Traffic Enforcement Unit (TEU)",
+      "office_code": "teu",
+      "qr_token": "tkn_teu_202",
+      "status": "active",
+      "created_at": "2026-05-01T08:00:00Z"
+    },
+    {
+      "id": "loc_idmu",
+      "office_name": "Investigation Unit (IDMU)",
+      "office_code": "idmu",
+      "qr_token": "tkn_idmu_303",
+      "status": "active",
+      "created_at": "2026-05-01T08:00:00Z"
+    },
+    {
+      "id": "loc_wcpc",
+      "office_name": "Women & Children Protection Desk (WCPC)",
+      "office_code": "wcpc",
+      "qr_token": "tkn_wcpc_404",
+      "status": "active",
+      "created_at": "2026-05-02T09:00:00Z"
+    },
+    {
+      "id": "loc_pcrd",
+      "office_name": "Public Complaints & Referral Desk (PCRD)",
+      "office_code": "pcrd",
+      "qr_token": "tkn_pcrd_505",
+      "status": "active",
+      "created_at": "2026-05-02T10:00:00Z"
+    },
+    {
+      "id": "loc_pdeu",
+      "office_name": "Provincial Drug Enforcement Unit (PDEU)",
+      "office_code": "pdeu",
+      "qr_token": "tkn_pdeu_606",
+      "status": "inactive",
+      "created_at": "2026-05-03T11:00:00Z"
+    }
+  ],
+  "feedbacks": [
+    {
+      "id": "fb_seed_0",
+      "rating": 3,
+      "category": "complaint",
+      "comments": "The traffic report release took almost two hours. Hopefully this can be streamlined.",
+      "created_at": "2026-05-01T10:37:12.433Z",
+      "office_source": "Provincial Headquarters (PHQ)",
+      "officer_name": "PEMS Juan Dela Cruz",
+      "device_info": "iPhone (iOS 17.4) - Safari",
+      "ip_address": "112.204.15.93",
+      "ratings": {
+        "promptness": 2,
+        "courtesy": 4,
+        "efficiency": 2,
+        "cleanliness": 4
+      }
+    },
+    {
+      "id": "fb_seed_1",
+      "rating": 4.5,
+      "category": "compliment",
+      "comments": "Very professional officers. Fast service here. Keep it up!",
+      "citizen_name": "Citizen 102",
+      "citizen_contact": "0917-555-1001",
+      "created_at": "2026-05-01T23:42:54.377Z",
+      "qr_location_id": "loc_teu",
+      "office_source": "Traffic Enforcement Unit (TEU)",
+      "device_info": "Samsung Galaxy S23 (Android 14) - Chrome",
+      "ip_address": "112.204.12.105",
+      "ratings": {
+        "promptness": 4,
+        "courtesy": 5,
+        "efficiency": 5,
+        "cleanliness": 4
+      }
+    },
+    {
+      "id": "fb_seed_2",
+      "rating": 5,
+      "category": "compliment",
+      "comments": "Very professional officers. Fast service here. Keep it up!",
+      "citizen_name": "Citizen 103",
+      "citizen_contact": "0917-555-1002",
+      "created_at": "2026-05-02T09:29:42.486Z",
+      "qr_location_id": "loc_idmu",
+      "office_source": "Investigation Unit (IDMU)",
+      "device_info": "Xiaomi Redmi Note 12 - Chrome Mobile",
+      "ip_address": "49.145.88.23",
+      "ratings": {
+        "promptness": 5,
+        "courtesy": 5,
+        "efficiency": 5,
+        "cleanliness": 5
+      }
+    },
+    {
+      "id": "fb_seed_3",
+      "rating": 4.5,
+      "category": "compliment",
+      "comments": "Officer was very accommodating and helpful in explaining the police clearance process.",
+      "citizen_name": "Citizen 104",
+      "citizen_contact": "0917-555-1003",
+      "created_at": "2026-05-03T00:18:46.915Z",
+      "office_source": "Women & Children Protection Desk (WCPC)",
+      "device_info": "OPPO A78 - Opera",
+      "ip_address": "120.28.140.71",
+      "ratings": {
+        "promptness": 5,
+        "courtesy": 5,
+        "efficiency": 4,
+        "cleanliness": 4
+      }
+    },
+    {
+      "id": "fb_seed_4",
+      "rating": 3.75,
+      "category": "inquiry",
+      "comments": "Inquired about firearms licensing requirement. Desk officer provided pamphlet.",
+      "created_at": "2026-05-03T13:53:09.667Z",
+      "qr_location_id": "loc_pcrd",
+      "office_source": "Public Complaints & Referral Desk (PCRD)",
+      "device_info": "Huawei P60 - Chrome",
+      "ip_address": "222.127.18.99",
+      "ratings": {
+        "promptness": 3,
+        "courtesy": 5,
+        "efficiency": 3,
+        "cleanliness": 4
+      }
+    },
+    {
+      "id": "fb_seed_5",
+      "rating": 4.5,
+      "category": "suggestion",
+      "comments": "Please open an online booking option for clearance so we do not have to crowd in waiting area.",
+      "citizen_name": "Citizen 106",
+      "citizen_contact": "0917-555-1005",
+      "created_at": "2026-05-04T00:07:38.779Z",
+      "qr_location_id": "loc_pdeu",
+      "office_source": "Provincial Drug Enforcement Unit (PDEU)",
+      "officer_name": "PEMS Juan Dela Cruz",
+      "device_info": "iPad - Mobile Safari",
+      "ip_address": "180.191.121.144",
+      "ratings": {
+        "promptness": 4,
+        "courtesy": 5,
+        "efficiency": 5,
+        "cleanliness": 4
+      }
+    },
+    {
+      "id": "fb_seed_6",
+      "rating": 3,
+      "category": "complaint",
+      "comments": "Very hot waiting area. Needs proper ventilation or a fan.",
+      "citizen_name": "Citizen 107",
+      "citizen_contact": "0917-555-1006",
+      "created_at": "2026-05-04T14:17:41.976Z",
+      "office_source": "Provincial Headquarters (PHQ)",
+      "device_info": "iPhone (iOS 17.4) - Safari",
+      "ip_address": "112.204.15.93",
+      "ratings": {
+        "promptness": 2,
+        "courtesy": 4,
+        "efficiency": 2,
+        "cleanliness": 4
+      }
+    },
+    {
+      "id": "fb_seed_7",
+      "rating": 4.75,
+      "category": "compliment",
+      "comments": "Officer was very accommodating and helpful in explaining the police clearance process.",
+      "citizen_name": "Citizen 108",
+      "citizen_contact": "0917-555-1007",
+      "created_at": "2026-05-05T00:51:34.122Z",
+      "qr_location_id": "loc_teu",
+      "office_source": "Traffic Enforcement Unit (TEU)",
+      "device_info": "Samsung Galaxy S23 (Android 14) - Chrome",
+      "ip_address": "112.204.12.105",
+      "ratings": {
+        "promptness": 5,
+        "courtesy": 5,
+        "efficiency": 4,
+        "cleanliness": 5
+      }
+    },
+    {
+      "id": "fb_seed_8",
+      "rating": 3.75,
+      "category": "inquiry",
+      "comments": "Checked hours of operation for public complaints. Standard hours verified.",
+      "created_at": "2026-05-05T14:21:49.821Z",
+      "qr_location_id": "loc_idmu",
+      "office_source": "Investigation Unit (IDMU)",
+      "device_info": "Xiaomi Redmi Note 12 - Chrome Mobile",
+      "ip_address": "49.145.88.23",
+      "ratings": {
+        "promptness": 4,
+        "courtesy": 5,
+        "efficiency": 3,
+        "cleanliness": 3
+      }
+    },
+    {
+      "id": "fb_seed_9",
+      "rating": 4.25,
+      "category": "compliment",
+      "comments": "Very professional officers. Fast service here. Keep it up!",
+      "citizen_name": "Citizen 110",
+      "citizen_contact": "0917-555-1009",
+      "created_at": "2026-05-06T02:20:40.425Z",
+      "office_source": "Women & Children Protection Desk (WCPC)",
+      "device_info": "OPPO A78 - Opera",
+      "ip_address": "120.28.140.71",
+      "ratings": {
+        "promptness": 4,
+        "courtesy": 5,
+        "efficiency": 4,
+        "cleanliness": 4
+      }
+    },
+    {
+      "id": "fb_seed_10",
+      "rating": 3.75,
+      "category": "suggestion",
+      "comments": "Maybe add a priority lane for pregnant women and senior citizens specifically.",
+      "citizen_name": "Citizen 111",
+      "citizen_contact": "0917-555-1010",
+      "created_at": "2026-05-06T14:03:46.677Z",
+      "qr_location_id": "loc_pcrd",
+      "office_source": "Public Complaints & Referral Desk (PCRD)",
+      "officer_name": "PEMS Juan Dela Cruz",
+      "device_info": "Huawei P60 - Chrome",
+      "ip_address": "222.127.18.99",
+      "ratings": {
+        "promptness": 3,
+        "courtesy": 4,
+        "efficiency": 4,
+        "cleanliness": 4
+      }
+    },
+    {
+      "id": "fb_seed_11",
+      "rating": 4.75,
+      "category": "compliment",
+      "comments": "Very professional officers. Fast service here. Keep it up!",
+      "citizen_name": "Citizen 112",
+      "citizen_contact": "0917-555-1011",
+      "created_at": "2026-05-07T04:21:05.473Z",
+      "qr_location_id": "loc_pdeu",
+      "office_source": "Provincial Drug Enforcement Unit (PDEU)",
+      "device_info": "iPad - Mobile Safari",
+      "ip_address": "180.191.121.144",
+      "ratings": {
+        "promptness": 5,
+        "courtesy": 5,
+        "efficiency": 5,
+        "cleanliness": 4
+      }
+    },
+    {
+      "id": "fb_seed_12",
+      "rating": 2,
+      "category": "complaint",
+      "comments": "Slightly disorganized queue. Waiting row system is confusing.",
+      "created_at": "2026-05-07T14:14:22.573Z",
+      "office_source": "Provincial Headquarters (PHQ)",
+      "device_info": "iPhone (iOS 17.4) - Safari",
+      "ip_address": "112.204.15.93",
+      "ratings": {
+        "promptness": 2,
+        "courtesy": 2,
+        "efficiency": 1,
+        "cleanliness": 3
+      }
+    },
+    {
+      "id": "fb_seed_13",
+      "rating": 4.75,
+      "category": "compliment",
+      "comments": "Clean office, organized queues, and very respectful desk officers.",
+      "citizen_name": "Citizen 114",
+      "citizen_contact": "0917-555-1013",
+      "created_at": "2026-05-08T05:02:18.855Z",
+      "qr_location_id": "loc_teu",
+      "office_source": "Traffic Enforcement Unit (TEU)",
+      "device_info": "Samsung Galaxy S23 (Android 14) - Chrome",
+      "ip_address": "112.204.12.105",
+      "ratings": {
+        "promptness": 4,
+        "courtesy": 5,
+        "efficiency": 5,
+        "cleanliness": 5
+      }
+    },
+    {
+      "id": "fb_seed_14",
+      "rating": 4.5,
+      "category": "compliment",
+      "comments": "Officer was very accommodating and helpful in explaining the police clearance process.",
+      "citizen_name": "Citizen 115",
+      "citizen_contact": "0917-555-1014",
+      "created_at": "2026-05-08T16:38:45.747Z",
+      "qr_location_id": "loc_idmu",
+      "office_source": "Investigation Unit (IDMU)",
+      "device_info": "Xiaomi Redmi Note 12 - Chrome Mobile",
+      "ip_address": "49.145.88.23",
+      "ratings": {
+        "promptness": 4,
+        "courtesy": 5,
+        "efficiency": 5,
+        "cleanliness": 4
+      }
+    },
+    {
+      "id": "fb_seed_15",
+      "rating": 4,
+      "category": "suggestion",
+      "comments": "Maybe add a priority lane for pregnant women and senior citizens specifically.",
+      "citizen_name": "Citizen 116",
+      "citizen_contact": "0917-555-1015",
+      "created_at": "2026-05-09T05:09:11.754Z",
+      "office_source": "Women & Children Protection Desk (WCPC)",
+      "officer_name": "PEMS Juan Dela Cruz",
+      "device_info": "OPPO A78 - Opera",
+      "ip_address": "120.28.140.71",
+      "ratings": {
+        "promptness": 5,
+        "courtesy": 4,
+        "efficiency": 3,
+        "cleanliness": 4
+      }
+    },
+    {
+      "id": "fb_seed_16",
+      "rating": 3.75,
+      "category": "inquiry",
+      "comments": "Checked hours of operation for public complaints. Standard hours verified.",
+      "created_at": "2026-05-09T18:47:19.650Z",
+      "qr_location_id": "loc_pcrd",
+      "office_source": "Public Complaints & Referral Desk (PCRD)",
+      "device_info": "Huawei P60 - Chrome",
+      "ip_address": "222.127.18.99",
+      "ratings": {
+        "promptness": 4,
+        "courtesy": 5,
+        "efficiency": 3,
+        "cleanliness": 3
+      }
+    },
+    {
+      "id": "fb_seed_17",
+      "rating": 4.5,
+      "category": "compliment",
+      "comments": "Very professional officers. Fast service here. Keep it up!",
+      "citizen_name": "Citizen 118",
+      "citizen_contact": "0917-555-1017",
+      "created_at": "2026-05-10T07:53:55.883Z",
+      "qr_location_id": "loc_pdeu",
+      "office_source": "Provincial Drug Enforcement Unit (PDEU)",
+      "device_info": "iPad - Mobile Safari",
+      "ip_address": "180.191.121.144",
+      "ratings": {
+        "promptness": 5,
+        "courtesy": 5,
+        "efficiency": 4,
+        "cleanliness": 4
+      }
+    },
+    {
+      "id": "fb_seed_18",
+      "rating": 2.25,
+      "category": "complaint",
+      "comments": "The traffic report release took almost two hours. Hopefully this can be streamlined.",
+      "citizen_name": "Citizen 119",
+      "citizen_contact": "0917-555-1018",
+      "created_at": "2026-05-10T19:54:37.495Z",
+      "office_source": "Provincial Headquarters (PHQ)",
+      "device_info": "iPhone (iOS 17.4) - Safari",
+      "ip_address": "112.204.15.93",
+      "ratings": {
+        "promptness": 1,
+        "courtesy": 4,
+        "efficiency": 1,
+        "cleanliness": 3
+      }
+    },
+    {
+      "id": "fb_seed_19",
+      "rating": 4.5,
+      "category": "compliment",
+      "comments": "Clean office, organized queues, and very respectful desk officers.",
+      "citizen_name": "Citizen 120",
+      "citizen_contact": "0917-555-1019",
+      "created_at": "2026-05-11T09:00:53.265Z",
+      "qr_location_id": "loc_teu",
+      "office_source": "Traffic Enforcement Unit (TEU)",
+      "device_info": "Samsung Galaxy S23 (Android 14) - Chrome",
+      "ip_address": "112.204.12.105",
+      "ratings": {
+        "promptness": 4,
+        "courtesy": 5,
+        "efficiency": 4,
+        "cleanliness": 5
+      }
+    },
+    {
+      "id": "fb_seed_20",
+      "rating": 3.75,
+      "category": "suggestion",
+      "comments": "Provide visual brochures detailing step-by-step reporting instructions.",
+      "created_at": "2026-05-11T21:32:40.838Z",
+      "qr_location_id": "loc_idmu",
+      "office_source": "Investigation Unit (IDMU)",
+      "officer_name": "PEMS Juan Dela Cruz",
+      "device_info": "Xiaomi Redmi Note 12 - Chrome Mobile",
+      "ip_address": "49.145.88.23",
+      "ratings": {
+        "promptness": 3,
+        "courtesy": 5,
+        "efficiency": 4,
+        "cleanliness": 3
+      }
+    },
+    {
+      "id": "fb_seed_21",
+      "rating": 4.25,
+      "category": "compliment",
+      "comments": "Very professional officers. Fast service here. Keep it up!",
+      "citizen_name": "Citizen 122",
+      "citizen_contact": "0917-555-1021",
+      "created_at": "2026-05-12T08:13:42.212Z",
+      "office_source": "Women & Children Protection Desk (WCPC)",
+      "device_info": "OPPO A78 - Opera",
+      "ip_address": "120.28.140.71",
+      "ratings": {
+        "promptness": 4,
+        "courtesy": 5,
+        "efficiency": 4,
+        "cleanliness": 4
+      }
+    },
+    {
+      "id": "fb_seed_22",
+      "rating": 4.75,
+      "category": "compliment",
+      "comments": "Very professional officers. Fast service here. Keep it up!",
+      "citizen_name": "Citizen 123",
+      "citizen_contact": "0917-555-1022",
+      "created_at": "2026-05-12T21:15:42.536Z",
+      "qr_location_id": "loc_pcrd",
+      "office_source": "Public Complaints & Referral Desk (PCRD)",
+      "device_info": "Huawei P60 - Chrome",
+      "ip_address": "222.127.18.99",
+      "ratings": {
+        "promptness": 4,
+        "courtesy": 5,
+        "efficiency": 5,
+        "cleanliness": 5
+      }
+    },
+    {
+      "id": "fb_seed_23",
+      "rating": 4.75,
+      "category": "compliment",
+      "comments": "Very professional officers. Fast service here. Keep it up!",
+      "citizen_name": "Citizen 124",
+      "citizen_contact": "0917-555-1023",
+      "created_at": "2026-05-13T10:13:24.571Z",
+      "qr_location_id": "loc_pdeu",
+      "office_source": "Provincial Drug Enforcement Unit (PDEU)",
+      "device_info": "iPad - Mobile Safari",
+      "ip_address": "180.191.121.144",
+      "ratings": {
+        "promptness": 5,
+        "courtesy": 5,
+        "efficiency": 5,
+        "cleanliness": 4
+      }
+    },
+    {
+      "id": "fb_seed_24",
+      "rating": 2.25,
+      "category": "complaint",
+      "comments": "Slightly disorganized queue. Waiting row system is confusing.",
+      "created_at": "2026-05-13T20:39:01.208Z",
+      "office_source": "Provincial Headquarters (PHQ)",
+      "device_info": "iPhone (iOS 17.4) - Safari",
+      "ip_address": "112.204.15.93",
+      "ratings": {
+        "promptness": 2,
+        "courtesy": 3,
+        "efficiency": 1,
+        "cleanliness": 3
+      }
+    },
+    {
+      "id": "fb_seed_25",
+      "rating": 3.75,
+      "category": "suggestion",
+      "comments": "Install an air conditioning unit or more electric fans in the desk room.",
+      "citizen_name": "Citizen 126",
+      "citizen_contact": "0917-555-1025",
+      "created_at": "2026-05-14T10:07:04.262Z",
+      "qr_location_id": "loc_teu",
+      "office_source": "Traffic Enforcement Unit (TEU)",
+      "officer_name": "PEMS Juan Dela Cruz",
+      "device_info": "Samsung Galaxy S23 (Android 14) - Chrome",
+      "ip_address": "112.204.12.105",
+      "ratings": {
+        "promptness": 3,
+        "courtesy": 4,
+        "efficiency": 4,
+        "cleanliness": 4
+      }
+    },
+    {
+      "id": "fb_seed_26",
+      "rating": 4.75,
+      "category": "compliment",
+      "comments": "Thank you for assisting my grandmother with her police report today. Great job, PHQ!",
+      "citizen_name": "Citizen 127",
+      "citizen_contact": "0917-555-1026",
+      "created_at": "2026-05-14T22:56:20.508Z",
+      "qr_location_id": "loc_idmu",
+      "office_source": "Investigation Unit (IDMU)",
+      "device_info": "Xiaomi Redmi Note 12 - Chrome Mobile",
+      "ip_address": "49.145.88.23",
+      "ratings": {
+        "promptness": 5,
+        "courtesy": 5,
+        "efficiency": 4,
+        "cleanliness": 5
+      }
+    },
+    {
+      "id": "fb_seed_27",
+      "rating": 4.75,
+      "category": "compliment",
+      "comments": "Very professional officers. Fast service here. Keep it up!",
+      "citizen_name": "Citizen 128",
+      "citizen_contact": "0917-555-1027",
+      "created_at": "2026-05-15T10:25:52.544Z",
+      "office_source": "Women & Children Protection Desk (WCPC)",
+      "device_info": "OPPO A78 - Opera",
+      "ip_address": "120.28.140.71",
+      "ratings": {
+        "promptness": 5,
+        "courtesy": 5,
+        "efficiency": 4,
+        "cleanliness": 5
+      }
+    },
+    {
+      "id": "fb_seed_28",
+      "rating": 4.25,
+      "category": "inquiry",
+      "comments": "Checked hours of operation for public complaints. Standard hours verified.",
+      "created_at": "2026-05-15T22:29:33.918Z",
+      "qr_location_id": "loc_pcrd",
+      "office_source": "Public Complaints & Referral Desk (PCRD)",
+      "device_info": "Huawei P60 - Chrome",
+      "ip_address": "222.127.18.99",
+      "ratings": {
+        "promptness": 4,
+        "courtesy": 5,
+        "efficiency": 4,
+        "cleanliness": 4
+      }
+    },
+    {
+      "id": "fb_seed_29",
+      "rating": 4.75,
+      "category": "compliment",
+      "comments": "Very professional officers. Fast service here. Keep it up!",
+      "citizen_name": "Citizen 130",
+      "citizen_contact": "0917-555-1029",
+      "created_at": "2026-05-16T14:13:08.594Z",
+      "qr_location_id": "loc_pdeu",
+      "office_source": "Provincial Drug Enforcement Unit (PDEU)",
+      "device_info": "iPad - Mobile Safari",
+      "ip_address": "180.191.121.144",
+      "ratings": {
+        "promptness": 5,
+        "courtesy": 5,
+        "efficiency": 5,
+        "cleanliness": 4
+      }
+    },
+    {
+      "id": "fb_seed_30",
+      "rating": 2.5,
+      "category": "complaint",
+      "comments": "The traffic report release took almost two hours. Hopefully this can be streamlined.",
+      "citizen_name": "Citizen 131",
+      "citizen_contact": "0917-555-1030",
+      "created_at": "2026-05-16T23:08:25.426Z",
+      "office_source": "Provincial Headquarters (PHQ)",
+      "officer_name": "PEMS Juan Dela Cruz",
+      "device_info": "iPhone (iOS 17.4) - Safari",
+      "ip_address": "112.204.15.93",
+      "ratings": {
+        "promptness": 1,
+        "courtesy": 3,
+        "efficiency": 2,
+        "cleanliness": 4
+      }
+    },
+    {
+      "id": "fb_seed_31",
+      "rating": 4.75,
+      "category": "compliment",
+      "comments": "Very professional officers. Fast service here. Keep it up!",
+      "citizen_name": "Citizen 132",
+      "citizen_contact": "0917-555-1031",
+      "created_at": "2026-05-17T11:48:11.894Z",
+      "qr_location_id": "loc_teu",
+      "office_source": "Traffic Enforcement Unit (TEU)",
+      "device_info": "Samsung Galaxy S23 (Android 14) - Chrome",
+      "ip_address": "112.204.12.105",
+      "ratings": {
+        "promptness": 5,
+        "courtesy": 5,
+        "efficiency": 4,
+        "cleanliness": 5
+      }
+    },
+    {
+      "id": "fb_seed_32",
+      "rating": 3.5,
+      "category": "inquiry",
+      "comments": "Asked about community patrol schedules in Brgy. Estaka.",
+      "created_at": "2026-05-18T01:02:58.767Z",
+      "qr_location_id": "loc_idmu",
+      "office_source": "Investigation Unit (IDMU)",
+      "device_info": "Xiaomi Redmi Note 12 - Chrome Mobile",
+      "ip_address": "49.145.88.23",
+      "ratings": {
+        "promptness": 4,
+        "courtesy": 4,
+        "efficiency": 3,
+        "cleanliness": 3
+      }
+    },
+    {
+      "id": "fb_seed_33",
+      "rating": 4.75,
+      "category": "compliment",
+      "comments": "Smooth interaction today. Fast action and polite personnel.",
+      "citizen_name": "Citizen 134",
+      "citizen_contact": "0917-555-1033",
+      "created_at": "2026-05-18T16:00:40.946Z",
+      "office_source": "Women & Children Protection Desk (WCPC)",
+      "device_info": "OPPO A78 - Opera",
+      "ip_address": "120.28.140.71",
+      "ratings": {
+        "promptness": 5,
+        "courtesy": 5,
+        "efficiency": 4,
+        "cleanliness": 5
+      }
+    },
+    {
+      "id": "fb_seed_34",
+      "rating": 4.75,
+      "category": "compliment",
+      "comments": "Smooth interaction today. Fast action and polite personnel.",
+      "citizen_name": "Citizen 135",
+      "citizen_contact": "0917-555-1034",
+      "created_at": "2026-05-19T03:10:27.242Z",
+      "qr_location_id": "loc_pcrd",
+      "office_source": "Public Complaints & Referral Desk (PCRD)",
+      "device_info": "Huawei P60 - Chrome",
+      "ip_address": "222.127.18.99",
+      "ratings": {
+        "promptness": 4,
+        "courtesy": 5,
+        "efficiency": 5,
+        "cleanliness": 5
+      }
+    },
+    {
+      "id": "fb_seed_35",
+      "rating": 3.5,
+      "category": "suggestion",
+      "comments": "Maybe add a priority lane for pregnant women and senior citizens specifically.",
+      "citizen_name": "Citizen 136",
+      "citizen_contact": "0917-555-1035",
+      "created_at": "2026-05-19T13:41:53.937Z",
+      "qr_location_id": "loc_pdeu",
+      "office_source": "Provincial Drug Enforcement Unit (PDEU)",
+      "officer_name": "PEMS Juan Dela Cruz",
+      "device_info": "iPad - Mobile Safari",
+      "ip_address": "180.191.121.144",
+      "ratings": {
+        "promptness": 3,
+        "courtesy": 4,
+        "efficiency": 4,
+        "cleanliness": 3
+      }
+    },
+    {
+      "id": "fb_seed_36",
+      "rating": 2,
+      "category": "complaint",
+      "comments": "Line was a bit long at the clearance counter. Need more servers.",
+      "created_at": "2026-05-20T04:07:54.725Z",
+      "office_source": "Provincial Headquarters (PHQ)",
+      "device_info": "iPhone (iOS 17.4) - Safari",
+      "ip_address": "112.204.15.93",
+      "ratings": {
+        "promptness": 1,
+        "courtesy": 3,
+        "efficiency": 1,
+        "cleanliness": 3
+      }
+    },
+    {
+      "id": "fb_seed_37",
+      "rating": 4.75,
+      "category": "compliment",
+      "comments": "Clean office, organized queues, and very respectful desk officers.",
+      "citizen_name": "Citizen 138",
+      "citizen_contact": "0917-555-1037",
+      "created_at": "2026-05-20T18:11:32.621Z",
+      "qr_location_id": "loc_teu",
+      "office_source": "Traffic Enforcement Unit (TEU)",
+      "device_info": "Samsung Galaxy S23 (Android 14) - Chrome",
+      "ip_address": "112.204.12.105",
+      "ratings": {
+        "promptness": 5,
+        "courtesy": 5,
+        "efficiency": 4,
+        "cleanliness": 5
+      }
+    },
+    {
+      "id": "fb_seed_38",
+      "rating": 4.5,
+      "category": "compliment",
+      "comments": "Officer was very accommodating and helpful in explaining the police clearance process.",
+      "citizen_name": "Citizen 139",
+      "citizen_contact": "0917-555-1038",
+      "created_at": "2026-05-21T04:16:46.787Z",
+      "qr_location_id": "loc_idmu",
+      "office_source": "Investigation Unit (IDMU)",
+      "device_info": "Xiaomi Redmi Note 12 - Chrome Mobile",
+      "ip_address": "49.145.88.23",
+      "ratings": {
+        "promptness": 5,
+        "courtesy": 5,
+        "efficiency": 4,
+        "cleanliness": 4
+      }
+    },
+    {
+      "id": "fb_seed_39",
+      "rating": 4.75,
+      "category": "compliment",
+      "comments": "Officer was very accommodating and helpful in explaining the police clearance process.",
+      "citizen_name": "Citizen 140",
+      "citizen_contact": "0917-555-1039",
+      "created_at": "2026-05-21T17:31:33.954Z",
+      "office_source": "Women & Children Protection Desk (WCPC)",
+      "device_info": "OPPO A78 - Opera",
+      "ip_address": "120.28.140.71",
+      "ratings": {
+        "promptness": 4,
+        "courtesy": 5,
+        "efficiency": 5,
+        "cleanliness": 5
+      }
+    },
+    {
+      "id": "fb_seed_40",
+      "rating": 4.25,
+      "category": "suggestion",
+      "comments": "Provide visual brochures detailing step-by-step reporting instructions.",
+      "created_at": "2026-05-22T06:17:42.228Z",
+      "qr_location_id": "loc_pcrd",
+      "office_source": "Public Complaints & Referral Desk (PCRD)",
+      "officer_name": "PEMS Juan Dela Cruz",
+      "device_info": "Huawei P60 - Chrome",
+      "ip_address": "222.127.18.99",
+      "ratings": {
+        "promptness": 3,
+        "courtesy": 5,
+        "efficiency": 5,
+        "cleanliness": 4
+      }
+    },
+    {
+      "id": "fb_seed_41",
+      "rating": 4.5,
+      "category": "compliment",
+      "comments": "Smooth interaction today. Fast action and polite personnel.",
+      "citizen_name": "Citizen 142",
+      "citizen_contact": "0917-555-1041",
+      "created_at": "2026-05-22T19:31:23.987Z",
+      "qr_location_id": "loc_pdeu",
+      "office_source": "Provincial Drug Enforcement Unit (PDEU)",
+      "device_info": "iPad - Mobile Safari",
+      "ip_address": "180.191.121.144",
+      "ratings": {
+        "promptness": 4,
+        "courtesy": 5,
+        "efficiency": 4,
+        "cleanliness": 5
+      }
+    },
+    {
+      "id": "fb_seed_42",
+      "rating": 2.25,
+      "category": "complaint",
+      "comments": "Slightly disorganized queue. Waiting row system is confusing.",
+      "citizen_name": "Citizen 143",
+      "citizen_contact": "0917-555-1042",
+      "created_at": "2026-05-23T07:38:29.947Z",
+      "office_source": "Provincial Headquarters (PHQ)",
+      "device_info": "iPhone (iOS 17.4) - Safari",
+      "ip_address": "112.204.15.93",
+      "ratings": {
+        "promptness": 1,
+        "courtesy": 2,
+        "efficiency": 2,
+        "cleanliness": 4
+      }
+    },
+    {
+      "id": "fb_seed_43",
+      "rating": 4.5,
+      "category": "compliment",
+      "comments": "Officer was very accommodating and helpful in explaining the police clearance process.",
+      "citizen_name": "Citizen 144",
+      "citizen_contact": "0917-555-1043",
+      "created_at": "2026-05-23T17:35:59.535Z",
+      "qr_location_id": "loc_teu",
+      "office_source": "Traffic Enforcement Unit (TEU)",
+      "device_info": "Samsung Galaxy S23 (Android 14) - Chrome",
+      "ip_address": "112.204.12.105",
+      "ratings": {
+        "promptness": 4,
+        "courtesy": 5,
+        "efficiency": 4,
+        "cleanliness": 5
+      }
+    },
+    {
+      "id": "fb_seed_44",
+      "rating": 4.25,
+      "category": "inquiry",
+      "comments": "Inquired about firearms licensing requirement. Desk officer provided pamphlet.",
+      "created_at": "2026-05-24T06:09:30.136Z",
+      "qr_location_id": "loc_idmu",
+      "office_source": "Investigation Unit (IDMU)",
+      "device_info": "Xiaomi Redmi Note 12 - Chrome Mobile",
+      "ip_address": "49.145.88.23",
+      "ratings": {
+        "promptness": 4,
+        "courtesy": 5,
+        "efficiency": 4,
+        "cleanliness": 4
+      }
+    },
+    {
+      "id": "fb_seed_45",
+      "rating": 4.5,
+      "category": "suggestion",
+      "comments": "Please open an online booking option for clearance so we do not have to crowd in waiting area.",
+      "citizen_name": "Citizen 146",
+      "citizen_contact": "0917-555-1045",
+      "created_at": "2026-05-24T21:57:36.028Z",
+      "office_source": "Women & Children Protection Desk (WCPC)",
+      "officer_name": "PEMS Juan Dela Cruz",
+      "device_info": "OPPO A78 - Opera",
+      "ip_address": "120.28.140.71",
+      "ratings": {
+        "promptness": 5,
+        "courtesy": 4,
+        "efficiency": 5,
+        "cleanliness": 4
+      }
+    },
+    {
+      "id": "fb_seed_46",
+      "rating": 4.5,
+      "category": "compliment",
+      "comments": "Officer was very accommodating and helpful in explaining the police clearance process.",
+      "citizen_name": "Citizen 147",
+      "citizen_contact": "0917-555-1046",
+      "created_at": "2026-05-25T10:53:11.660Z",
+      "qr_location_id": "loc_pcrd",
+      "office_source": "Public Complaints & Referral Desk (PCRD)",
+      "device_info": "Huawei P60 - Chrome",
+      "ip_address": "222.127.18.99",
+      "ratings": {
+        "promptness": 4,
+        "courtesy": 5,
+        "efficiency": 5,
+        "cleanliness": 4
+      }
+    },
+    {
+      "id": "fb_seed_47",
+      "rating": 4.5,
+      "category": "compliment",
+      "comments": "Thank you for assisting my grandmother with her police report today. Great job, PHQ!",
+      "citizen_name": "Citizen 148",
+      "citizen_contact": "0917-555-1047",
+      "created_at": "2026-05-25T19:57:48.749Z",
+      "qr_location_id": "loc_pdeu",
+      "office_source": "Provincial Drug Enforcement Unit (PDEU)",
+      "device_info": "iPad - Mobile Safari",
+      "ip_address": "180.191.121.144",
+      "ratings": {
+        "promptness": 5,
+        "courtesy": 5,
+        "efficiency": 4,
+        "cleanliness": 4
+      }
+    },
+    {
+      "id": "fb_1784959685307_h98k",
+      "rating": 5,
+      "category": "compliment",
+      "comments": "Transacted with office.",
+      "created_at": "2026-07-25T06:08:05.307Z",
+      "office_source": "Provincial Headquarters (PHQ)",
+      "device_info": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+      "ip_address": "127.0.0.1",
+      "ratings": {
+        "promptness": 5,
+        "courtesy": 5,
+        "efficiency": 5,
+        "cleanliness": 5
+      }
+    }
+  ]
+}
