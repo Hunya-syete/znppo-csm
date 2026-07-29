@@ -8,6 +8,9 @@ import path from 'path';
 import { QRLocation, Feedback } from '../src/types';
 
 const DB_FILE = path.join(process.cwd(), 'pn_feedback_db.json');
+const TMP_DB_FILE = path.join('/tmp', 'pn_feedback_db.json');
+
+let cachedDb: DatabaseSchema | null = null;
 
 interface DatabaseSchema {
   locations: QRLocation[];
@@ -222,10 +225,27 @@ function generateSeedFeedbacks(): Feedback[] {
 }
 
 export function getDb(): DatabaseSchema {
+  if (cachedDb) {
+    return cachedDb;
+  }
+
+  // 1. Try reading /tmp if modified during serverless session
+  try {
+    if (fs.existsSync(TMP_DB_FILE)) {
+      const data = fs.readFileSync(TMP_DB_FILE, 'utf-8');
+      cachedDb = JSON.parse(data);
+      return cachedDb!;
+    }
+  } catch (err) {
+    // Ignore tmp error
+  }
+
+  // 2. Try reading project root DB_FILE
   try {
     if (fs.existsSync(DB_FILE)) {
       const data = fs.readFileSync(DB_FILE, 'utf-8');
-      return JSON.parse(data);
+      cachedDb = JSON.parse(data);
+      return cachedDb!;
     }
   } catch (err) {
     console.error('Error reading pn_feedback_db.json, falling back to seeds:', err);
@@ -236,14 +256,23 @@ export function getDb(): DatabaseSchema {
     locations: DEFAULT_LOCATIONS,
     feedbacks: generateSeedFeedbacks(),
   };
+  cachedDb = dbData;
   saveDb(dbData);
   return dbData;
 }
 
 export function saveDb(db: DatabaseSchema): void {
+  cachedDb = db;
+  // Try saving to project root first
   try {
     fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2), 'utf-8');
+    return;
   } catch (err) {
-    console.error('Error saving pn_feedback_db.json:', err);
+    // If root is read-only (e.g., Vercel serverless), save to /tmp
+    try {
+      fs.writeFileSync(TMP_DB_FILE, JSON.stringify(db, null, 2), 'utf-8');
+    } catch (tmpErr) {
+      console.error('Error saving to /tmp DB file on Vercel:', tmpErr);
+    }
   }
 }
