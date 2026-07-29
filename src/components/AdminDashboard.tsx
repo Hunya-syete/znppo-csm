@@ -24,7 +24,15 @@ import {
   RefreshCw,
   Search,
   BookOpen,
-  Star
+  Star,
+  Download,
+  Building2,
+  X,
+  ChevronRight,
+  Table,
+  Grid,
+  Layers,
+  FileText
 } from 'lucide-react';
 import { 
   ResponsiveContainer, 
@@ -72,6 +80,11 @@ export default function AdminDashboard({ onSelectPoster, refreshTrigger = 0 }: A
   const [fbSearch, setFbSearch] = useState<string>('');
   const [fbCategoryFilter, setFbCategoryFilter] = useState<string>('all');
   const [fbRatingFilter, setFbRatingFilter] = useState<string>('all');
+
+  // Office Performance Matrix states
+  const [officeSearch, setOfficeSearch] = useState<string>('');
+  const [officeViewMode, setOfficeViewMode] = useState<'table' | 'sqd-matrix' | 'cards'>('table');
+  const [selectedOfficeModal, setSelectedOfficeModal] = useState<string | null>(null);
 
   // Initialize and load
   useEffect(() => {
@@ -272,6 +285,259 @@ export default function AdminDashboard({ onSelectPoster, refreshTrigger = 0 }: A
     const link = document.createElement('a');
     link.href = url;
     link.setAttribute('download', `ZNPPPO_Citizen_Feedback_Submissions_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Helper: Calculate detailed per-office CSM percentages and mean scores
+  const getOfficeMetricsList = () => {
+    const officeSet = new Set<string>();
+    locations.forEach(loc => {
+      if (loc.office_name) officeSet.add(loc.office_name);
+    });
+    feedbacks.forEach(fb => {
+      if (fb.office_source) officeSet.add(fb.office_source);
+    });
+
+    const totalAllSubmissions = feedbacks.length;
+
+    const list = Array.from(officeSet).map(officeName => {
+      const officeFbs = feedbacks.filter(fb => fb.office_source === officeName);
+      const count = officeFbs.length;
+      const percentageOfTotal = totalAllSubmissions > 0 ? (count / totalAllSubmissions) * 100 : 0;
+      
+      const sumRating = officeFbs.reduce((acc, f) => acc + f.rating, 0);
+      const averageRating = count > 0 ? sumRating / count : 0;
+
+      let satisfiedCount = 0;
+      let neutralCount = 0;
+      let unsatisfiedCount = 0;
+
+      const sqdSums = { sqd0: 0, sqd1: 0, sqd2: 0, sqd3: 0, sqd4: 0, sqd5: 0, sqd6: 0, sqd7: 0, sqd8: 0 };
+      const sqdCounts = { sqd0: 0, sqd1: 0, sqd2: 0, sqd3: 0, sqd4: 0, sqd5: 0, sqd6: 0, sqd7: 0, sqd8: 0 };
+      const catCounts = { compliment: 0, suggestion: 0, complaint: 0, inquiry: 0 };
+
+      officeFbs.forEach(fb => {
+        if (fb.rating >= 4.0) satisfiedCount++;
+        else if (fb.rating >= 2.5) neutralCount++;
+        else unsatisfiedCount++;
+
+        if (fb.category && fb.category in catCounts) {
+          catCounts[fb.category as keyof typeof catCounts]++;
+        }
+
+        if (fb.sqd_ratings) {
+          (Object.keys(sqdSums) as Array<keyof typeof sqdSums>).forEach(k => {
+            const val = fb.sqd_ratings?.[k as keyof typeof sqdSums];
+            if (typeof val === 'number') {
+              sqdSums[k as keyof typeof sqdSums] += val;
+              sqdCounts[k as keyof typeof sqdSums]++;
+            }
+          });
+        } else if (fb.ratings) {
+          sqdSums.sqd0 += fb.ratings.cleanliness; sqdCounts.sqd0++;
+          sqdSums.sqd1 += fb.ratings.promptness; sqdCounts.sqd1++;
+          sqdSums.sqd3 += fb.ratings.efficiency; sqdCounts.sqd3++;
+          sqdSums.sqd7 += fb.ratings.courtesy; sqdCounts.sqd7++;
+        }
+      });
+
+      const satisfiedPercentage = count > 0 ? (satisfiedCount / count) * 100 : 0;
+      const neutralPercentage = count > 0 ? (neutralCount / count) * 100 : 0;
+      const unsatisfiedPercentage = count > 0 ? (unsatisfiedCount / count) * 100 : 0;
+
+      const sqdMeans = {
+        sqd0: sqdCounts.sqd0 > 0 ? sqdSums.sqd0 / sqdCounts.sqd0 : averageRating,
+        sqd1: sqdCounts.sqd1 > 0 ? sqdSums.sqd1 / sqdCounts.sqd1 : averageRating,
+        sqd2: sqdCounts.sqd2 > 0 ? sqdSums.sqd2 / sqdCounts.sqd2 : averageRating,
+        sqd3: sqdCounts.sqd3 > 0 ? sqdSums.sqd3 / sqdCounts.sqd3 : averageRating,
+        sqd4: sqdCounts.sqd4 > 0 ? sqdSums.sqd4 / sqdCounts.sqd4 : averageRating,
+        sqd5: sqdCounts.sqd5 > 0 ? sqdSums.sqd5 / sqdCounts.sqd5 : averageRating,
+        sqd6: sqdCounts.sqd6 > 0 ? sqdSums.sqd6 / sqdCounts.sqd6 : averageRating,
+        sqd7: sqdCounts.sqd7 > 0 ? sqdSums.sqd7 / sqdCounts.sqd7 : averageRating,
+        sqd8: sqdCounts.sqd8 > 0 ? sqdSums.sqd8 / sqdCounts.sqd8 : averageRating,
+      };
+
+      return {
+        officeName,
+        count,
+        percentageOfTotal,
+        averageRating,
+        satisfiedCount,
+        satisfiedPercentage,
+        neutralCount,
+        neutralPercentage,
+        unsatisfiedCount,
+        unsatisfiedPercentage,
+        sqdMeans,
+        byCategory: catCounts,
+        feedbacks: officeFbs
+      };
+    });
+
+    return list.sort((a, b) => b.count - a.count || b.averageRating - a.averageRating);
+  };
+
+  // Export CSV: Office/Division CSM Summary with Percentages and SQD Mean Scores
+  const handleExportOfficeCSMCSV = () => {
+    const officeList = getOfficeMetricsList();
+    if (officeList.length === 0) {
+      alert('No office analytics data available to export.');
+      return;
+    }
+
+    const headers = [
+      'Office / Division / Station Unit',
+      'Total Feedback Submissions',
+      'Share of Total Submissions (%)',
+      'Overall Mean Rating Score (1.00 - 5.00)',
+      'Satisfied Submissions Count (4-5 Stars)',
+      'Satisfied Rate (%)',
+      'Neutral Submissions Count (3 Stars)',
+      'Neutral Rate (%)',
+      'Unsatisfied Submissions Count (1-2 Stars)',
+      'Unsatisfied Rate (%)',
+      'SQD0 Overall Satisfaction Mean Score',
+      'SQD1 Responsiveness / Promptness Mean Score',
+      'SQD2 Reasonable Requirements Mean Score',
+      'SQD3 Processing Steps & Payment Mean Score',
+      'SQD4 Information Access Mean Score',
+      'SQD5 Fees Value / Fair Cost Mean Score',
+      'SQD6 Equal Treatment / Fairness Mean Score',
+      'SQD7 Staff Courtesy & Respect Mean Score',
+      'SQD8 Service Outcome Mean Score',
+      'Compliments Count',
+      'Compliments Rate (%)',
+      'Suggestions Count',
+      'Suggestions Rate (%)',
+      'Complaints Count',
+      'Complaints Rate (%)',
+      'Inquiries Count',
+      'Inquiries Rate (%)'
+    ];
+
+    const escapeCSVValue = (val: any) => {
+      if (val === null || val === undefined) return '';
+      const stringified = String(val);
+      if (stringified.includes(',') || stringified.includes('"') || stringified.includes('\n') || stringified.includes('\r')) {
+        return `"${stringified.replace(/"/g, '""')}"`;
+      }
+      return stringified;
+    };
+
+    const rows = officeList.map(off => [
+      off.officeName,
+      off.count,
+      `${off.percentageOfTotal.toFixed(1)}%`,
+      off.averageRating.toFixed(2),
+      off.satisfiedCount,
+      `${off.satisfiedPercentage.toFixed(1)}%`,
+      off.neutralCount,
+      `${off.neutralPercentage.toFixed(1)}%`,
+      off.unsatisfiedCount,
+      `${off.unsatisfiedPercentage.toFixed(1)}%`,
+      off.sqdMeans.sqd0.toFixed(2),
+      off.sqdMeans.sqd1.toFixed(2),
+      off.sqdMeans.sqd2.toFixed(2),
+      off.sqdMeans.sqd3.toFixed(2),
+      off.sqdMeans.sqd4.toFixed(2),
+      off.sqdMeans.sqd5.toFixed(2),
+      off.sqdMeans.sqd6.toFixed(2),
+      off.sqdMeans.sqd7.toFixed(2),
+      off.sqdMeans.sqd8.toFixed(2),
+      off.byCategory.compliment,
+      `${off.count > 0 ? ((off.byCategory.compliment / off.count) * 100).toFixed(1) : 0}%`,
+      off.byCategory.suggestion,
+      `${off.count > 0 ? ((off.byCategory.suggestion / off.count) * 100).toFixed(1) : 0}%`,
+      off.byCategory.complaint,
+      `${off.count > 0 ? ((off.byCategory.complaint / off.count) * 100).toFixed(1) : 0}%`,
+      off.byCategory.inquiry,
+      `${off.count > 0 ? ((off.byCategory.inquiry / off.count) * 100).toFixed(1) : 0}%`
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(escapeCSVValue).join(','))
+    ].join('\r\n');
+
+    const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `ZNPPPO_Office_Percentages_And_Mean_Scores_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Export CSV: Single Office Dedicated Report
+  const handleExportSingleOfficeCSV = (officeName: string) => {
+    const officeMetrics = getOfficeMetricsList().find(o => o.officeName === officeName);
+    if (!officeMetrics) return;
+
+    const headers = [
+      'Office / Division',
+      'Submission ID',
+      'Date & Time',
+      'Category',
+      'Overall Mean Score',
+      'SQD0 Satisfaction',
+      'SQD1 Time/Promptness',
+      'SQD2 Requirements',
+      'SQD3 Steps & Cost',
+      'SQD4 Info Access',
+      'SQD5 Fees Value',
+      'SQD6 Fairness',
+      'SQD7 Courtesy',
+      'SQD8 Service Outcome',
+      'Citizen Name',
+      'Contact Info',
+      'Comments',
+      'Suggestions'
+    ];
+
+    const escapeCSVValue = (val: any) => {
+      if (val === null || val === undefined) return '';
+      const stringified = String(val);
+      if (stringified.includes(',') || stringified.includes('"') || stringified.includes('\n') || stringified.includes('\r')) {
+        return `"${stringified.replace(/"/g, '""')}"`;
+      }
+      return stringified;
+    };
+
+    const rows = officeMetrics.feedbacks.map(fb => [
+      fb.office_source,
+      fb.id,
+      new Date(fb.created_at).toLocaleString(),
+      fb.category,
+      fb.rating,
+      fb.sqd_ratings?.sqd0 ?? fb.ratings?.cleanliness ?? 'N/A',
+      fb.sqd_ratings?.sqd1 ?? fb.ratings?.promptness ?? 'N/A',
+      fb.sqd_ratings?.sqd2 ?? 5,
+      fb.sqd_ratings?.sqd3 ?? fb.ratings?.efficiency ?? 'N/A',
+      fb.sqd_ratings?.sqd4 ?? 5,
+      fb.sqd_ratings?.sqd5 ?? 5,
+      fb.sqd_ratings?.sqd6 ?? 5,
+      fb.sqd_ratings?.sqd7 ?? fb.ratings?.courtesy ?? 'N/A',
+      fb.sqd_ratings?.sqd8 ?? 5,
+      fb.citizen_name || 'Anonymous',
+      fb.citizen_contact || 'N/A',
+      fb.comments || '',
+      fb.suggestions || ''
+    ]);
+
+    const sanitizeFilename = officeName.replace(/[^a-zA-Z0-9_-]/g, '_');
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(escapeCSVValue).join(','))
+    ].join('\r\n');
+
+    const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `ZNPPPO_${sanitizeFilename}_Report_${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -593,64 +859,294 @@ export default function AdminDashboard({ onSelectPoster, refreshTrigger = 0 }: A
             </div>
           </div>
 
-          {/* 5. Office Performance Ranking Summary */}
-          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden" id="office-leaderboard">
-            <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+          {/* 5. Office / Division CSM Performance & Mean Score Breakdown Matrix */}
+          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm" id="office-leaderboard">
+            <div className="p-5 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-50/60">
               <div>
-                <h3 className="text-xs font-black uppercase text-slate-700 tracking-wider">Office Performance matrix</h3>
-                <p className="text-[10px] text-slate-400 mt-0.5">Units satisfaction rate and engagement stats</p>
+                <div className="flex items-center gap-2">
+                  <span className="bg-police-blue text-white text-[9px] font-bold tracking-widest px-2 py-0.5 rounded uppercase font-mono">
+                    CSM ANALYTICS
+                  </span>
+                  <h3 className="text-xs font-black uppercase text-police-blue tracking-wider">
+                    Office / Division Results & Mean Score Matrix
+                  </h3>
+                </div>
+                <p className="text-[11px] text-slate-500 mt-0.5 font-medium">
+                  Per-office mean scores (SQD0 - SQD8) & percentage distribution across ZNPPPO stations
+                </p>
               </div>
-              <span className="text-[10px] font-mono font-bold text-slate-500 bg-slate-100 p-1 rounded">Ranked by Ratings</span>
+
+              {/* Action Buttons & Export Controls */}
+              <div className="flex flex-wrap items-center gap-2">
+                {/* Search Bar */}
+                <div className="relative">
+                  <Search className="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="Search office / division..."
+                    value={officeSearch}
+                    onChange={(e) => setOfficeSearch(e.target.value)}
+                    className="bg-white border border-slate-200 rounded-lg pl-8 pr-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-police-blue/20 w-44 md:w-52"
+                  />
+                </div>
+
+                {/* View Mode Switcher */}
+                <div className="flex items-center bg-slate-200/70 p-0.5 rounded-lg text-xs font-bold text-slate-600">
+                  <button
+                    onClick={() => setOfficeViewMode('table')}
+                    className={`px-2.5 py-1 rounded-md flex items-center gap-1 cursor-pointer transition-all ${officeViewMode === 'table' ? 'bg-white text-police-blue shadow-xs' : 'hover:text-slate-900'}`}
+                    title="Summary Table"
+                  >
+                    <Table className="w-3.5 h-3.5" />
+                    <span>Summary</span>
+                  </button>
+                  <button
+                    onClick={() => setOfficeViewMode('sqd-matrix')}
+                    className={`px-2.5 py-1 rounded-md flex items-center gap-1 cursor-pointer transition-all ${officeViewMode === 'sqd-matrix' ? 'bg-white text-police-blue shadow-xs' : 'hover:text-slate-900'}`}
+                    title="Detailed SQD0-SQD8 Matrix"
+                  >
+                    <Layers className="w-3.5 h-3.5" />
+                    <span>SQD Matrix</span>
+                  </button>
+                  <button
+                    onClick={() => setOfficeViewMode('cards')}
+                    className={`px-2.5 py-1 rounded-md flex items-center gap-1 cursor-pointer transition-all ${officeViewMode === 'cards' ? 'bg-white text-police-blue shadow-xs' : 'hover:text-slate-900'}`}
+                    title="Visual Cards"
+                  >
+                    <Grid className="w-3.5 h-3.5" />
+                    <span>Cards</span>
+                  </button>
+                </div>
+
+                {/* Export CSV Button */}
+                <button
+                  onClick={handleExportOfficeCSMCSV}
+                  className="bg-police-blue hover:bg-police-blue-hover text-white text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 shadow-sm transition-all border border-police-gold cursor-pointer"
+                  title="Export complete per-office percentage distribution and mean score matrix as Excel CSV"
+                >
+                  <FileSpreadsheet className="w-3.5 h-3.5 text-police-gold" />
+                  <span>Export Office Excel CSV</span>
+                </button>
+              </div>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-slate-600 border-collapse">
-                <thead>
-                  <tr className="bg-slate-100 text-slate-500 font-bold uppercase tracking-wider text-[9px] border-b border-slate-150">
-                    <th className="p-4">Station Unit Office Description</th>
-                    <th className="p-4 text-center">Submissions</th>
-                    <th className="p-4 text-center">Rating Average</th>
-                    <th className="p-4">Command Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {Object.keys(analytics.byOffice).map((officeName) => {
-                    const stats = analytics.byOffice[officeName];
-                    const matchedLoc = locations.find(l => l.office_name === officeName);
-                    
-                    // Determine safety colors for stars
-                    let starsColor = 'text-slate-350';
-                    if (stats.averageRating >= 4.0) starsColor = 'text-emerald-600 font-bold';
-                    else if (stats.averageRating >= 2.5) starsColor = 'text-amber-600 font-bold';
-                    else if (stats.averageRating > 0) starsColor = 'text-rose-600 font-bold';
+            {/* Content Views */}
+            {(() => {
+              const allOffices = getOfficeMetricsList();
+              const filteredOffices = allOffices.filter(o => 
+                o.officeName.toLowerCase().includes(officeSearch.toLowerCase())
+              );
 
-                    return (
-                      <tr key={officeName} className="hover:bg-slate-50/30">
-                        <td className="p-4 font-bold text-slate-800">{officeName}</td>
-                        <td className="p-4 text-center font-mono font-bold text-slate-600">{stats.count}</td>
-                        <td className="p-4 text-center">
-                          <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded bg-slate-50 ${starsColor}`}>
-                            {stats.averageRating} ★
+              if (filteredOffices.length === 0) {
+                return (
+                  <div className="p-12 text-center text-slate-400 text-xs">
+                    No office or division matching "{officeSearch}" was found.
+                  </div>
+                );
+              }
+
+              if (officeViewMode === 'table') {
+                return (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs text-slate-600 border-collapse">
+                      <thead>
+                        <tr className="bg-slate-100/80 text-slate-600 font-extrabold uppercase tracking-wider text-[9px] border-b border-slate-200">
+                          <th className="p-3.5">Office / Division</th>
+                          <th className="p-3.5 text-center">Submissions</th>
+                          <th className="p-3.5 text-center">Share %</th>
+                          <th className="p-3.5 text-center">Overall Mean</th>
+                          <th className="p-3.5 text-center">Satisfied % (4-5★)</th>
+                          <th className="p-3.5 text-center">Neutral % (3★)</th>
+                          <th className="p-3.5 text-center">Unsatisfied % (1-2★)</th>
+                          <th className="p-3.5 text-center">SQD0 Sat. Mean</th>
+                          <th className="p-3.5 text-center">SQD1 Prompt. Mean</th>
+                          <th className="p-3.5 text-center">SQD7 Courtesy Mean</th>
+                          <th className="p-3.5 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {filteredOffices.map((off) => {
+                          const matchedLoc = locations.find(l => l.office_name === off.officeName);
+                          let ratingColor = 'text-slate-600';
+                          if (off.averageRating >= 4.0) ratingColor = 'text-emerald-700 bg-emerald-50 border-emerald-200';
+                          else if (off.averageRating >= 2.5) ratingColor = 'text-amber-700 bg-amber-50 border-amber-200';
+                          else if (off.count > 0) ratingColor = 'text-rose-700 bg-rose-50 border-rose-200';
+
+                          return (
+                            <tr key={off.officeName} className="hover:bg-slate-50/60 transition-colors">
+                              <td className="p-3.5 font-bold text-slate-800">
+                                <button
+                                  onClick={() => setSelectedOfficeModal(off.officeName)}
+                                  className="text-left font-extrabold text-police-blue hover:underline cursor-pointer flex items-center gap-1.5"
+                                >
+                                  <Building2 className="w-3.5 h-3.5 shrink-0 text-slate-400" />
+                                  <span>{off.officeName}</span>
+                                </button>
+                              </td>
+                              <td className="p-3.5 text-center font-mono font-bold text-slate-700">{off.count}</td>
+                              <td className="p-3.5 text-center font-mono text-slate-500">{off.percentageOfTotal.toFixed(1)}%</td>
+                              <td className="p-3.5 text-center">
+                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded font-black border text-xs ${ratingColor}`}>
+                                  {off.averageRating.toFixed(2)} ★
+                                </span>
+                              </td>
+                              <td className="p-3.5 text-center">
+                                <span className="font-extrabold text-emerald-700">{off.satisfiedPercentage.toFixed(1)}%</span>
+                              </td>
+                              <td className="p-3.5 text-center font-medium text-amber-600">{off.neutralPercentage.toFixed(1)}%</td>
+                              <td className="p-3.5 text-center font-medium text-rose-600">{off.unsatisfiedPercentage.toFixed(1)}%</td>
+                              <td className="p-3.5 text-center font-mono text-slate-700 font-bold">{off.sqdMeans.sqd0.toFixed(2)}</td>
+                              <td className="p-3.5 text-center font-mono text-slate-700">{off.sqdMeans.sqd1.toFixed(2)}</td>
+                              <td className="p-3.5 text-center font-mono text-slate-700">{off.sqdMeans.sqd7.toFixed(2)}</td>
+                              <td className="p-3.5 text-right space-x-2">
+                                <button
+                                  onClick={() => setSelectedOfficeModal(off.officeName)}
+                                  className="text-[11px] font-bold text-police-blue hover:text-police-blue-hover hover:underline cursor-pointer inline-flex items-center gap-0.5"
+                                >
+                                  Details <ChevronRight className="w-3 h-3" />
+                                </button>
+                                <button
+                                  onClick={() => handleExportSingleOfficeCSV(off.officeName)}
+                                  className="text-[11px] font-semibold text-emerald-700 hover:underline cursor-pointer"
+                                  title="Export CSV for this office"
+                                >
+                                  CSV
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                );
+              }
+
+              if (officeViewMode === 'sqd-matrix') {
+                return (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs text-slate-600 border-collapse">
+                      <thead>
+                        <tr className="bg-slate-100/90 text-slate-600 font-extrabold uppercase tracking-wider text-[8.5px] border-b border-slate-200">
+                          <th className="p-3">Office / Division</th>
+                          <th className="p-3 text-center">Count</th>
+                          <th className="p-3 text-center">Overall</th>
+                          <th className="p-3 text-center" title="SQD0: Overall Satisfaction">SQD0 Sat.</th>
+                          <th className="p-3 text-center" title="SQD1: Time & Promptness">SQD1 Time</th>
+                          <th className="p-3 text-center" title="SQD2: Reasonable Requirements">SQD2 Req.</th>
+                          <th className="p-3 text-center" title="SQD3: Steps & Cost">SQD3 Steps</th>
+                          <th className="p-3 text-center" title="SQD4: Info Access">SQD4 Info</th>
+                          <th className="p-3 text-center" title="SQD5: Fees Value">SQD5 Fees</th>
+                          <th className="p-3 text-center" title="SQD6: Equal Treatment / Fairness">SQD6 Fair</th>
+                          <th className="p-3 text-center" title="SQD7: Staff Courtesy">SQD7 Cour.</th>
+                          <th className="p-3 text-center" title="SQD8: Service Outcome">SQD8 Out.</th>
+                          <th className="p-3 text-right">Report</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 font-mono">
+                        {filteredOffices.map((off) => (
+                          <tr key={off.officeName} className="hover:bg-slate-50/60 transition-colors">
+                            <td className="p-3 font-sans font-extrabold text-slate-800">
+                              <button
+                                onClick={() => setSelectedOfficeModal(off.officeName)}
+                                className="text-left hover:text-police-blue hover:underline cursor-pointer"
+                              >
+                                {off.officeName}
+                              </button>
+                            </td>
+                            <td className="p-3 text-center text-slate-700 font-bold">{off.count}</td>
+                            <td className="p-3 text-center font-bold text-police-blue">{off.averageRating.toFixed(2)}</td>
+                            <td className="p-3 text-center text-slate-700">{off.sqdMeans.sqd0.toFixed(2)}</td>
+                            <td className="p-3 text-center text-slate-700">{off.sqdMeans.sqd1.toFixed(2)}</td>
+                            <td className="p-3 text-center text-slate-700">{off.sqdMeans.sqd2.toFixed(2)}</td>
+                            <td className="p-3 text-center text-slate-700">{off.sqdMeans.sqd3.toFixed(2)}</td>
+                            <td className="p-3 text-center text-slate-700">{off.sqdMeans.sqd4.toFixed(2)}</td>
+                            <td className="p-3 text-center text-slate-700">{off.sqdMeans.sqd5.toFixed(2)}</td>
+                            <td className="p-3 text-center text-slate-700">{off.sqdMeans.sqd6.toFixed(2)}</td>
+                            <td className="p-3 text-center text-slate-700">{off.sqdMeans.sqd7.toFixed(2)}</td>
+                            <td className="p-3 text-center text-slate-700">{off.sqdMeans.sqd8.toFixed(2)}</td>
+                            <td className="p-3 text-right font-sans">
+                              <button
+                                onClick={() => handleExportSingleOfficeCSV(off.officeName)}
+                                className="text-[10px] font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-0.5 rounded cursor-pointer"
+                              >
+                                Export
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                );
+              }
+
+              // Cards View
+              return (
+                <div className="p-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 bg-slate-50/30">
+                  {filteredOffices.map((off) => (
+                    <div key={off.officeName} className="bg-white border border-slate-200 rounded-xl p-4 space-y-3 hover:border-police-blue/30 transition-all">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <h4 className="font-extrabold text-xs text-slate-800 leading-snug">{off.officeName}</h4>
+                          <span className="text-[10px] text-slate-400 font-mono">
+                            {off.count} Submissions ({off.percentageOfTotal.toFixed(1)}% share)
                           </span>
-                        </td>
-                        <td className="p-4">
-                          {matchedLoc ? (
-                            <button
-                              onClick={() => onSelectPoster(matchedLoc)}
-                              className="text-indigo-600 hover:text-indigo-800 hover:underline inline-flex items-center gap-1 font-semibold cursor-pointer"
-                            >
-                              <Printer className="w-3.5 h-3.5" /> View Public Poster
-                            </button>
-                          ) : (
-                            <span className="text-slate-400">Manual Walk-In Entry</span>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                        </div>
+                        <span className="bg-amber-50 text-amber-700 border border-amber-200 font-black text-xs px-2 py-0.5 rounded shrink-0">
+                          {off.averageRating.toFixed(2)} ★
+                        </span>
+                      </div>
+
+                      {/* Satisfied vs Neutral vs Unsatisfied Progress Bar */}
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-[10px] font-bold">
+                          <span className="text-emerald-700">Satisfied: {off.satisfiedPercentage.toFixed(1)}%</span>
+                          <span className="text-amber-600">Neutral: {off.neutralPercentage.toFixed(1)}%</span>
+                          <span className="text-rose-600">Unsat: {off.unsatisfiedPercentage.toFixed(1)}%</span>
+                        </div>
+                        <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden flex">
+                          <div style={{ width: `${off.satisfiedPercentage}%` }} className="bg-emerald-500 h-full" />
+                          <div style={{ width: `${off.neutralPercentage}%` }} className="bg-amber-400 h-full" />
+                          <div style={{ width: `${off.unsatisfiedPercentage}%` }} className="bg-rose-500 h-full" />
+                        </div>
+                      </div>
+
+                      {/* Key SQD Mini Grid */}
+                      <div className="grid grid-cols-3 gap-1.5 text-[9.5px] font-mono bg-slate-50 p-2 rounded-lg border border-slate-150">
+                        <div>
+                          <span className="text-slate-400 block text-[8.5px]">SQD0 Sat</span>
+                          <strong className="text-slate-800">{off.sqdMeans.sqd0.toFixed(2)}</strong>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 block text-[8.5px]">SQD1 Time</span>
+                          <strong className="text-slate-800">{off.sqdMeans.sqd1.toFixed(2)}</strong>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 block text-[8.5px]">SQD7 Courtesy</span>
+                          <strong className="text-slate-800">{off.sqdMeans.sqd7.toFixed(2)}</strong>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-2 border-t text-[10px]">
+                        <button
+                          onClick={() => setSelectedOfficeModal(off.officeName)}
+                          className="font-bold text-police-blue hover:underline cursor-pointer flex items-center gap-1"
+                        >
+                          View Full Analytics <ChevronRight className="w-3 h-3" />
+                        </button>
+                        <button
+                          onClick={() => handleExportSingleOfficeCSV(off.officeName)}
+                          className="font-bold text-emerald-700 hover:underline cursor-pointer flex items-center gap-1"
+                        >
+                          <Download className="w-3 h-3" /> Export CSV
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
           </div>
 
         </div>
@@ -911,6 +1407,199 @@ export default function AdminDashboard({ onSelectPoster, refreshTrigger = 0 }: A
 
         </div>
       )}
+
+      {/* Office Analytics Detail Modal */}
+      {selectedOfficeModal && (() => {
+        const off = getOfficeMetricsList().find(o => o.officeName === selectedOfficeModal);
+        if (!off) return null;
+
+        const sqdNames = [
+          { key: 'sqd0', title: 'SQD0: Overall Satisfaction', desc: 'Satisfied with overall quality of service provided' },
+          { key: 'sqd1', title: 'SQD1: Time & Responsiveness', desc: 'Reasonable response time and waiting period' },
+          { key: 'sqd2', title: 'SQD2: Reasonable Requirements', desc: 'Requirements were fair, clear, and necessary' },
+          { key: 'sqd3', title: 'SQD3: Processing Steps', desc: 'Simple, clear, and straightforward transaction steps' },
+          { key: 'sqd4', title: 'SQD4: Information Access', desc: 'Easy to find information and ask questions' },
+          { key: 'sqd5', title: 'SQD5: Fees Value', desc: 'Fair cost, value for money, and fee clarity' },
+          { key: 'sqd6', title: 'SQD6: Equal Treatment & Fairness', desc: 'Treated fairly with equal dignity and no bias' },
+          { key: 'sqd7', title: 'SQD7: Staff Courtesy & Respect', desc: 'Polite, respectful, and helpful police personnel' },
+          { key: 'sqd8', title: 'SQD8: Expected Outcome', desc: 'Received expected service or document result' }
+        ];
+
+        return (
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fadeIn" id="office-detail-modal">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+              
+              {/* Modal Header */}
+              <div className="p-5 bg-police-blue text-white flex items-center justify-between border-b-4 border-police-gold">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Building2 className="w-5 h-5 text-police-gold" />
+                    <span className="text-[10px] font-bold uppercase tracking-widest bg-white/10 px-2 py-0.5 rounded font-mono">
+                      OFFICE / DIVISION PROFILE
+                    </span>
+                  </div>
+                  <h3 className="text-lg font-black tracking-tight">{off.officeName}</h3>
+                </div>
+                <button
+                  onClick={() => setSelectedOfficeModal(null)}
+                  className="p-1.5 hover:bg-white/10 rounded-lg transition-all text-white/80 hover:text-white cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Modal Body Scrollable */}
+              <div className="p-6 overflow-y-auto space-y-6 text-xs text-slate-600">
+                
+                {/* Stats Summary Bar */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                  <div>
+                    <span className="text-[10px] text-slate-400 font-bold uppercase block">Total Submissions</span>
+                    <strong className="text-lg font-black text-slate-800">{off.count}</strong>
+                    <span className="text-[10px] text-slate-400 font-mono block">({off.percentageOfTotal.toFixed(1)}% of province total)</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 font-bold uppercase block">Overall Mean Score</span>
+                    <strong className="text-lg font-black text-amber-600">{off.averageRating.toFixed(2)} / 5.00 ★</strong>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 font-bold uppercase block">Satisfied Rate</span>
+                    <strong className="text-lg font-black text-emerald-600">{off.satisfiedPercentage.toFixed(1)}%</strong>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 font-bold uppercase block">Complaints Count</span>
+                    <strong className="text-lg font-black text-rose-600">{off.byCategory.complaint}</strong>
+                  </div>
+                </div>
+
+                {/* Satisfaction Rate Breakdown Bar */}
+                <div className="space-y-2 bg-white p-4 rounded-xl border border-slate-200">
+                  <h4 className="font-extrabold uppercase text-slate-700 text-[11px] tracking-wider">
+                    Rating Percentage Distribution
+                  </h4>
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between font-bold text-[11px]">
+                      <span className="text-emerald-700">Satisfied (4-5 Stars): {off.satisfiedPercentage.toFixed(1)}% ({off.satisfiedCount})</span>
+                      <span className="text-amber-600">Neutral (3 Stars): {off.neutralPercentage.toFixed(1)}% ({off.neutralCount})</span>
+                      <span className="text-rose-600">Unsatisfied (1-2 Stars): {off.unsatisfiedPercentage.toFixed(1)}% ({off.unsatisfiedCount})</span>
+                    </div>
+                    <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden flex">
+                      <div style={{ width: `${off.satisfiedPercentage}%` }} className="bg-emerald-500 h-full" title={`Satisfied: ${off.satisfiedPercentage.toFixed(1)}%`} />
+                      <div style={{ width: `${off.neutralPercentage}%` }} className="bg-amber-400 h-full" title={`Neutral: ${off.neutralPercentage.toFixed(1)}%`} />
+                      <div style={{ width: `${off.unsatisfiedPercentage}%` }} className="bg-rose-500 h-full" title={`Unsatisfied: ${off.unsatisfiedPercentage.toFixed(1)}%`} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* SQD Mean Scores Grid */}
+                <div className="space-y-3">
+                  <h4 className="font-extrabold uppercase text-slate-700 text-[11px] tracking-wider">
+                    Service Quality Dimensions (SQD) Mean Scores
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {sqdNames.map(({ key, title, desc }) => {
+                      const score = off.sqdMeans[key as keyof typeof off.sqdMeans];
+                      const pct = (score / 5) * 100;
+                      let barColor = 'bg-police-blue';
+                      if (score >= 4.0) barColor = 'bg-emerald-500';
+                      else if (score >= 2.5) barColor = 'bg-amber-500';
+                      else barColor = 'bg-rose-500';
+
+                      return (
+                        <div key={key} className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1.5">
+                          <div className="flex justify-between items-center">
+                            <span className="font-extrabold text-slate-800 text-[11px]">{title}</span>
+                            <span className="font-mono font-black text-xs text-police-blue bg-white px-2 py-0.5 rounded border border-slate-200">
+                              {score.toFixed(2)} / 5.0
+                            </span>
+                          </div>
+                          <p className="text-[10px] text-slate-500 leading-tight">{desc}</p>
+                          <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
+                            <div style={{ width: `${pct}%` }} className={`h-full ${barColor}`} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Category Percentages */}
+                <div className="bg-white p-4 rounded-xl border border-slate-200 space-y-2">
+                  <h4 className="font-extrabold uppercase text-slate-700 text-[11px] tracking-wider">
+                    Feedback Category Distribution
+                  </h4>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center font-bold">
+                    <div className="bg-emerald-50 p-2 rounded-lg border border-emerald-200">
+                      <span className="text-[10px] text-emerald-800 uppercase block">Compliments</span>
+                      <span className="text-sm text-emerald-900 font-extrabold">
+                        {off.byCategory.compliment} ({off.count > 0 ? ((off.byCategory.compliment / off.count) * 100).toFixed(1) : 0}%)
+                      </span>
+                    </div>
+                    <div className="bg-amber-50 p-2 rounded-lg border border-amber-200">
+                      <span className="text-[10px] text-amber-800 uppercase block">Suggestions</span>
+                      <span className="text-sm text-amber-900 font-extrabold">
+                        {off.byCategory.suggestion} ({off.count > 0 ? ((off.byCategory.suggestion / off.count) * 100).toFixed(1) : 0}%)
+                      </span>
+                    </div>
+                    <div className="bg-rose-50 p-2 rounded-lg border border-rose-200">
+                      <span className="text-[10px] text-rose-800 uppercase block">Complaints</span>
+                      <span className="text-sm text-rose-900 font-extrabold">
+                        {off.byCategory.complaint} ({off.count > 0 ? ((off.byCategory.complaint / off.count) * 100).toFixed(1) : 0}%)
+                      </span>
+                    </div>
+                    <div className="bg-slate-50 p-2 rounded-lg border border-slate-200">
+                      <span className="text-[10px] text-slate-600 uppercase block">Inquiries</span>
+                      <span className="text-sm text-slate-800 font-extrabold">
+                        {off.byCategory.inquiry} ({off.count > 0 ? ((off.byCategory.inquiry / off.count) * 100).toFixed(1) : 0}%)
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Citizen Comments for this Office */}
+                <div className="space-y-2">
+                  <h4 className="font-extrabold uppercase text-slate-700 text-[11px] tracking-wider">
+                    Recent Citizen Feedback Comments ({off.feedbacks.length})
+                  </h4>
+                  <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                    {off.feedbacks.length === 0 ? (
+                      <p className="text-slate-400 italic">No feedback entries recorded yet for this office.</p>
+                    ) : (
+                      off.feedbacks.map(f => (
+                        <div key={f.id} className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-xs space-y-1">
+                          <div className="flex justify-between items-center text-[10px] font-mono text-slate-400">
+                            <span className="font-bold text-slate-700 uppercase">{f.category} • {f.rating} ★</span>
+                            <span>{new Date(f.created_at).toLocaleDateString()}</span>
+                          </div>
+                          <p className="italic text-slate-700">“{f.comments || 'No comment provided.'}”</p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Modal Footer */}
+              <div className="p-4 bg-slate-50 border-t flex items-center justify-between">
+                <button
+                  onClick={() => handleExportSingleOfficeCSV(off.officeName)}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2 rounded-xl flex items-center gap-2 cursor-pointer transition-all"
+                >
+                  <Download className="w-4 h-4" /> Export {off.officeName} CSV
+                </button>
+                <button
+                  onClick={() => setSelectedOfficeModal(null)}
+                  className="bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs px-4 py-2 rounded-xl cursor-pointer"
+                >
+                  Close Profile
+                </button>
+              </div>
+
+            </div>
+          </div>
+        );
+      })()}
 
     </div>
   );

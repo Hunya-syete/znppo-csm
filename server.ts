@@ -371,24 +371,109 @@ app.get('/api/analytics', (req, res) => {
     sqd8: sqdCounts.sqd8 > 0 ? parseFloat((sqdSums.sqd8 / sqdCounts.sqd8).toFixed(2)) : 5
   };
 
-  // Calculate rating and counts by office source
-  const byOffice: { [office: string]: { count: number; averageRating: number; sum: number } } = {};
-  
-  feedbacks.forEach(fb => {
-    const office = fb.office_source;
-    if (!byOffice[office]) {
-      byOffice[office] = { count: 0, averageRating: 0, sum: 0 };
+  // Calculate rating, SQD breakdown, category percentages, and totals by office source
+  const byOfficeData: {
+    [office: string]: {
+      count: number;
+      percentageOfTotal: number;
+      averageRating: number;
+      satisfiedCount: number;
+      satisfiedPercentage: number;
+      neutralCount: number;
+      neutralPercentage: number;
+      unsatisfiedCount: number;
+      unsatisfiedPercentage: number;
+      sqdMeans: {
+        sqd0: number; sqd1: number; sqd2: number; sqd3: number;
+        sqd4: number; sqd5: number; sqd6: number; sqd7: number; sqd8: number;
+      };
+      byCategory: {
+        compliment: number;
+        suggestion: number;
+        complaint: number;
+        inquiry: number;
+      };
     }
-    byOffice[office].count++;
-    byOffice[office].sum += fb.rating;
-    byOffice[office].averageRating = parseFloat((byOffice[office].sum / byOffice[office].count).toFixed(2));
+  } = {};
+
+  const feedbacksByOfficeGroup: { [office: string]: typeof feedbacks } = {};
+  feedbacks.forEach(fb => {
+    const off = fb.office_source || 'General Walk-In';
+    if (!feedbacksByOfficeGroup[off]) {
+      feedbacksByOfficeGroup[off] = [];
+    }
+    feedbacksByOfficeGroup[off].push(fb);
   });
 
-  const cleanByOffice: { [office: string]: { count: number; averageRating: number } } = {};
-  Object.keys(byOffice).forEach(k => {
-    cleanByOffice[k] = {
-      count: byOffice[k].count,
-      averageRating: byOffice[k].averageRating
+  Object.keys(feedbacksByOfficeGroup).forEach(off => {
+    const list = feedbacksByOfficeGroup[off];
+    const count = list.length;
+    const percentageOfTotal = totalSubmissions > 0 ? parseFloat(((count / totalSubmissions) * 100).toFixed(1)) : 0;
+    
+    const sumRating = list.reduce((acc, f) => acc + f.rating, 0);
+    const officeAvgRating = count > 0 ? parseFloat((sumRating / count).toFixed(2)) : 0;
+
+    let satisfiedCount = 0;
+    let neutralCount = 0;
+    let unsatisfiedCount = 0;
+
+    const sqdSumsLoc = { sqd0: 0, sqd1: 0, sqd2: 0, sqd3: 0, sqd4: 0, sqd5: 0, sqd6: 0, sqd7: 0, sqd8: 0 };
+    const sqdCountsLoc = { sqd0: 0, sqd1: 0, sqd2: 0, sqd3: 0, sqd4: 0, sqd5: 0, sqd6: 0, sqd7: 0, sqd8: 0 };
+    const catCountsLoc = { compliment: 0, suggestion: 0, complaint: 0, inquiry: 0 };
+
+    list.forEach(fb => {
+      if (fb.rating >= 4.0) satisfiedCount++;
+      else if (fb.rating >= 2.5) neutralCount++;
+      else unsatisfiedCount++;
+
+      if (fb.category && fb.category in catCountsLoc) {
+        catCountsLoc[fb.category as keyof typeof catCountsLoc]++;
+      }
+
+      if (fb.sqd_ratings) {
+        (Object.keys(sqdSumsLoc) as Array<keyof typeof sqdSumsLoc>).forEach(k => {
+          const val = fb.sqd_ratings?.[k];
+          if (typeof val === 'number') {
+            sqdSumsLoc[k] += val;
+            sqdCountsLoc[k]++;
+          }
+        });
+      } else if (fb.ratings) {
+        sqdSumsLoc.sqd0 += fb.ratings.cleanliness; sqdCountsLoc.sqd0++;
+        sqdSumsLoc.sqd1 += fb.ratings.promptness; sqdCountsLoc.sqd1++;
+        sqdSumsLoc.sqd3 += fb.ratings.efficiency; sqdCountsLoc.sqd3++;
+        sqdSumsLoc.sqd7 += fb.ratings.courtesy; sqdCountsLoc.sqd7++;
+      }
+    });
+
+    const satisfiedPercentage = count > 0 ? parseFloat(((satisfiedCount / count) * 100).toFixed(1)) : 0;
+    const neutralPercentage = count > 0 ? parseFloat(((neutralCount / count) * 100).toFixed(1)) : 0;
+    const unsatisfiedPercentage = count > 0 ? parseFloat(((unsatisfiedCount / count) * 100).toFixed(1)) : 0;
+
+    const sqdMeans = {
+      sqd0: sqdCountsLoc.sqd0 > 0 ? parseFloat((sqdSumsLoc.sqd0 / sqdCountsLoc.sqd0).toFixed(2)) : officeAvgRating,
+      sqd1: sqdCountsLoc.sqd1 > 0 ? parseFloat((sqdSumsLoc.sqd1 / sqdCountsLoc.sqd1).toFixed(2)) : officeAvgRating,
+      sqd2: sqdCountsLoc.sqd2 > 0 ? parseFloat((sqdSumsLoc.sqd2 / sqdCountsLoc.sqd2).toFixed(2)) : officeAvgRating,
+      sqd3: sqdCountsLoc.sqd3 > 0 ? parseFloat((sqdSumsLoc.sqd3 / sqdCountsLoc.sqd3).toFixed(2)) : officeAvgRating,
+      sqd4: sqdCountsLoc.sqd4 > 0 ? parseFloat((sqdSumsLoc.sqd4 / sqdCountsLoc.sqd4).toFixed(2)) : officeAvgRating,
+      sqd5: sqdCountsLoc.sqd5 > 0 ? parseFloat((sqdSumsLoc.sqd5 / sqdCountsLoc.sqd5).toFixed(2)) : officeAvgRating,
+      sqd6: sqdCountsLoc.sqd6 > 0 ? parseFloat((sqdSumsLoc.sqd6 / sqdCountsLoc.sqd6).toFixed(2)) : officeAvgRating,
+      sqd7: sqdCountsLoc.sqd7 > 0 ? parseFloat((sqdSumsLoc.sqd7 / sqdCountsLoc.sqd7).toFixed(2)) : officeAvgRating,
+      sqd8: sqdCountsLoc.sqd8 > 0 ? parseFloat((sqdSumsLoc.sqd8 / sqdCountsLoc.sqd8).toFixed(2)) : officeAvgRating,
+    };
+
+    byOfficeData[off] = {
+      count,
+      percentageOfTotal,
+      averageRating: officeAvgRating,
+      satisfiedCount,
+      satisfiedPercentage,
+      neutralCount,
+      neutralPercentage,
+      unsatisfiedCount,
+      unsatisfiedPercentage,
+      sqdMeans,
+      byCategory: catCountsLoc
     };
   });
 
@@ -436,7 +521,7 @@ app.get('/api/analytics', (req, res) => {
     totalSubmissions,
     conversionRate,
     averageRating,
-    byOffice: cleanByOffice,
+    byOffice: byOfficeData,
     byCategory,
     ratingDistribution,
     sqdAverages,

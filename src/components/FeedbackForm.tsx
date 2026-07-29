@@ -18,6 +18,7 @@ import {
   ThumbsUp,
   Mail,
   Calendar,
+  Clock,
   Building2,
   FileText,
   Smile,
@@ -38,7 +39,7 @@ interface FeedbackFormProps {
 export default function FeedbackForm({ 
   qrTokenFromUrl = null, 
   officeCodeFromUrl = null,
-  onSubmitSuccess 
+  onSubmitSuccess
 }: FeedbackFormProps) {
   // Language selection ('en' for English official PNP standard, 'fil' for Tagalog/Filipino)
   const [lang, setLang] = useState<'fil' | 'en'>('fil');
@@ -101,6 +102,7 @@ export default function FeedbackForm({
   // Submission statuses
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [submitSuccess, setSubmitSuccess] = useState<boolean>(false);
+  const [submittedAt, setSubmittedAt] = useState<Date | null>(null);
   const [serverError, setServerError] = useState<string | null>(null);
 
   // Auto handle CC1 selection: If option 4 (Not aware), default CC2 & CC3 to N/A
@@ -353,6 +355,7 @@ export default function FeedbackForm({
       
       setHasOfflineCache(true);
       setIsSubmitting(false);
+      setSubmittedAt(new Date());
       setSubmitSuccess(true);
       if (onSubmitSuccess) onSubmitSuccess();
       return;
@@ -366,6 +369,7 @@ export default function FeedbackForm({
       });
 
       if (res.ok) {
+        setSubmittedAt(new Date());
         setSubmitSuccess(true);
         if (onSubmitSuccess) onSubmitSuccess();
       } else {
@@ -392,6 +396,7 @@ export default function FeedbackForm({
     setSqdRatings({
       sqd0: 5, sqd1: 5, sqd2: 5, sqd3: 5, sqd4: 5, sqd5: 5, sqd6: 5, sqd7: 5, sqd8: 5
     });
+    setSubmittedAt(null);
     setSubmitSuccess(false);
     setServerError(null);
     setCaptchaInput('');
@@ -557,6 +562,22 @@ export default function FeedbackForm({
           <p className="text-slate-600 mt-2 text-sm max-w-md mx-auto leading-relaxed">
             Ang inyong mga sagot sa Client Satisfaction Measurement (CSM) ay matagumpay na naitala at direktang makatutulong sa pagpapabuti ng ating pampublikong serbisyo sa Zamboanga del Norte.
           </p>
+
+          {/* Submission Date & Time Stamp */}
+          {submittedAt && (
+            <div className="mt-5 max-w-md mx-auto bg-slate-50 border border-slate-200 rounded-xl p-3.5 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-700" id="submission-timestamp-panel">
+              <div className="flex items-center gap-2 font-medium text-slate-600">
+                <Calendar className="w-4 h-4 text-police-blue shrink-0" />
+                <span>{lang === 'en' ? 'Date Submitted:' : 'Petsa ng Pagpasa:'}</span>
+                <strong className="text-slate-900">{submittedAt.toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' })}</strong>
+              </div>
+              <div className="flex items-center gap-2 font-medium text-slate-600 border-t sm:border-t-0 sm:border-l border-slate-200 pt-2 sm:pt-0 sm:pl-3">
+                <Clock className="w-4 h-4 text-police-blue shrink-0" />
+                <span>{lang === 'en' ? 'Time Stamp:' : 'Oras:'}</span>
+                <strong className="text-slate-900">{submittedAt.toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}</strong>
+              </div>
+            </div>
+          )}
           {!isOnline && (
             <div className="mt-4 p-3 bg-amber-50 rounded-lg text-amber-800 border border-amber-100 text-xs max-w-sm mx-auto">
               Naitabi Offline! Isasabay ito sa pagpapadala kapag nagkaroon ng koneksyon sa internet.

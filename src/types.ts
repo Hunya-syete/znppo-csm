@@ -66,6 +66,36 @@ export interface Feedback {
   ratings: FeedbackRatings;
 }
 
+export interface OfficeAnalytics {
+  officeName: string;
+  count: number;
+  percentageOfTotal: number; // e.g. 25.5 (%)
+  averageRating: number;     // 1.00 - 5.00
+  satisfiedCount: number;
+  satisfiedPercentage: number;
+  neutralCount: number;
+  neutralPercentage: number;
+  unsatisfiedCount: number;
+  unsatisfiedPercentage: number;
+  sqdMeans: {
+    sqd0: number; // Overall Satisfaction
+    sqd1: number; // Promptness / Time
+    sqd2: number; // Reasonable Requirements
+    sqd3: number; // Processing Steps
+    sqd4: number; // Info Accessibility
+    sqd5: number; // Value / Fees
+    sqd6: number; // Fairness / Equal Treatment
+    sqd7: number; // Staff Courtesy
+    sqd8: number; // Outcome
+  };
+  byCategory: {
+    compliment: number;
+    suggestion: number;
+    complaint: number;
+    inquiry: number;
+  };
+}
+
 export interface AnalyticsSummary {
   totalScans: number;
   totalSubmissions: number;
@@ -74,7 +104,31 @@ export interface AnalyticsSummary {
   byOffice: {
     [office: string]: {
       count: number;
+      percentageOfTotal?: number;
       averageRating: number;
+      satisfiedCount?: number;
+      satisfiedPercentage?: number;
+      neutralCount?: number;
+      neutralPercentage?: number;
+      unsatisfiedCount?: number;
+      unsatisfiedPercentage?: number;
+      sqdMeans?: {
+        sqd0: number;
+        sqd1: number;
+        sqd2: number;
+        sqd3: number;
+        sqd4: number;
+        sqd5: number;
+        sqd6: number;
+        sqd7: number;
+        sqd8: number;
+      };
+      byCategory?: {
+        compliment: number;
+        suggestion: number;
+        complaint: number;
+        inquiry: number;
+      };
     }
   };
   byCategory: {
