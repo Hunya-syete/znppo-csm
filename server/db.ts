@@ -229,8 +229,17 @@ function generateSeedFeedbacks(): Feedback[] {
   return feedbacks.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
 }
 
+let hasLoggedFallbackWarning = false;
+
 function useJsonFallback(): boolean {
-  return !isFirebaseConfigured() && !process.env.VERCEL;
+  const shouldFallback = !isFirebaseConfigured();
+  if (shouldFallback && !hasLoggedFallbackWarning) {
+    console.warn(
+      'Firebase Admin SDK is not configured. Falling back to local JSON seed data for API responses.',
+    );
+    hasLoggedFallbackWarning = true;
+  }
+  return shouldFallback;
 }
 
 function cloneDb(db: DatabaseSchema): DatabaseSchema {
