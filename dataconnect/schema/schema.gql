@@ -1,0 +1,39 @@
+type Office @table {
+  name: String!
+  locationCode: String!
+  description: String
+  unitHeadId: UUID
+  createdAt: Timestamp!
+}
+
+type QrToken @table {
+  tokenString: String!
+  status: String!
+  officerName: String
+  expiresAt: Timestamp
+  office: Office!
+}
+
+type Feedback @table {
+  rating: Int!
+  message: String!
+  submittedAt: Timestamp!
+  officerNameReferenced: String
+  ipAddress: String
+  deviceMetadata: String
+  qrToken: QrToken!
+}
+
+type ScanLog @table {
+  timestamp: Timestamp!
+  ipAddress: String!
+  qrToken: QrToken!
+}
+
+type AdminUser @table {
+  username: String!
+  email: String!
+  passwordHash: String!
+  role: String!
+  lastLogin: Timestamp
+}

@@ -5,12 +5,17 @@
 
 import fs from 'fs';
 import path from 'path';
-import { QRLocation, Feedback } from '../src/types';
+import { Feedback, QRLocation } from '../src/types';
+import { getFirestoreDb, isFirebaseConfigured } from './firebase';
 
 const DB_FILE = path.join(process.cwd(), 'pn_feedback_db.json');
-const TMP_DB_FILE = path.join('/tmp', 'pn_feedback_db.json');
+const COLLECTIONS = {
+  feedbacks: 'feedbacks',
+  locations: 'locations',
+} as const;
 
 let cachedDb: DatabaseSchema | null = null;
+let seedPromise: Promise<void> | null = null;
 
 interface DatabaseSchema {
   locations: QRLocation[];
@@ -224,55 +229,290 @@ function generateSeedFeedbacks(): Feedback[] {
   return feedbacks.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
 }
 
-export function getDb(): DatabaseSchema {
-  if (cachedDb) {
-    return cachedDb;
+function useJsonFallback(): boolean {
+  return !isFirebaseConfigured() && !process.env.VERCEL;
+}
+
+function cloneDb(db: DatabaseSchema): DatabaseSchema {
+  return JSON.parse(JSON.stringify(db)) as DatabaseSchema;
+}
+
+function stripUndefined<T>(value: T): T {
+  if (Array.isArray(value)) {
+    return value.map((item) => stripUndefined(item)).filter((item) => item !== undefined) as T;
   }
 
-  // 1. Try reading /tmp if modified during serverless session
-  try {
-    if (fs.existsSync(TMP_DB_FILE)) {
-      const data = fs.readFileSync(TMP_DB_FILE, 'utf-8');
-      cachedDb = JSON.parse(data);
-      return cachedDb!;
-    }
-  } catch (err) {
-    // Ignore tmp error
+  if (value && typeof value === 'object') {
+    const cleanedEntries = Object.entries(value as Record<string, unknown>)
+      .filter(([, entryValue]) => entryValue !== undefined)
+      .map(([entryKey, entryValue]) => [entryKey, stripUndefined(entryValue)]);
+
+    return Object.fromEntries(cleanedEntries) as T;
   }
 
-  // 2. Try reading project root DB_FILE
-  try {
-    if (fs.existsSync(DB_FILE)) {
-      const data = fs.readFileSync(DB_FILE, 'utf-8');
-      cachedDb = JSON.parse(data);
-      return cachedDb!;
-    }
-  } catch (err) {
-    console.error('Error reading pn_feedback_db.json, falling back to seeds:', err);
-  }
+  return value;
+}
 
-  // Seed default data
-  const dbData: DatabaseSchema = {
+function buildSeedData(): DatabaseSchema {
+  return {
     locations: DEFAULT_LOCATIONS,
     feedbacks: generateSeedFeedbacks(),
   };
-  cachedDb = dbData;
-  saveDb(dbData);
-  return dbData;
 }
 
-export function saveDb(db: DatabaseSchema): void {
-  cachedDb = db;
-  // Try saving to project root first
+function loadSeedData(): DatabaseSchema {
   try {
-    fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2), 'utf-8');
-    return;
-  } catch (err) {
-    // If root is read-only (e.g., Vercel serverless), save to /tmp
-    try {
-      fs.writeFileSync(TMP_DB_FILE, JSON.stringify(db, null, 2), 'utf-8');
-    } catch (tmpErr) {
-      console.error('Error saving to /tmp DB file on Vercel:', tmpErr);
+    if (fs.existsSync(DB_FILE)) {
+      const raw = fs.readFileSync(DB_FILE, 'utf-8');
+      const parsed = JSON.parse(raw) as Partial<DatabaseSchema>;
+
+      if (Array.isArray(parsed.locations) && Array.isArray(parsed.feedbacks)) {
+        return {
+          locations: parsed.locations as QRLocation[],
+          feedbacks: parsed.feedbacks as Feedback[],
+        };
+      }
     }
+  } catch (error) {
+    console.error('Error reading pn_feedback_db.json for Firestore seed:', error);
   }
+
+  return buildSeedData();
+}
+
+function readJsonFallback(): DatabaseSchema {
+  if (!cachedDb) {
+    cachedDb = loadSeedData();
+  }
+
+  return cloneDb(cachedDb);
+}
+
+function writeJsonFallback(db: DatabaseSchema): void {
+  cachedDb = cloneDb(db);
+  fs.writeFileSync(DB_FILE, JSON.stringify(cachedDb, null, 2), 'utf-8');
+}
+
+type FirestoreDoc = {
+  id: string;
+  data(): Record<string, unknown> | undefined;
+};
+
+function mapLocationDoc(doc: FirestoreDoc): QRLocation | null {
+  const data = doc.data();
+  if (!data) {
+    return null;
+  }
+
+  return {
+    id: doc.id,
+    office_name: typeof data.office_name === 'string' ? data.office_name : '',
+    office_code: typeof data.office_code === 'string' ? data.office_code : '',
+    qr_token: typeof data.qr_token === 'string' ? data.qr_token : '',
+    status: data.status === 'inactive' ? 'inactive' : 'active',
+    created_at:
+      typeof data.created_at === 'string' ? data.created_at : new Date().toISOString(),
+  };
+}
+
+function mapFeedbackDoc(doc: FirestoreDoc): Feedback | null {
+  const data = doc.data();
+  if (!data) {
+    return null;
+  }
+
+  const ratings = (data.ratings ?? {}) as Record<string, unknown>;
+
+  return {
+    ...(data as Omit<Feedback, 'id' | 'ratings'>),
+    id: doc.id,
+    rating: typeof data.rating === 'number' ? data.rating : Number(data.rating ?? 0),
+    category: (data.category as Feedback['category']) ?? 'inquiry',
+    comments: typeof data.comments === 'string' ? data.comments : '',
+    created_at:
+      typeof data.created_at === 'string' ? data.created_at : new Date().toISOString(),
+    office_source: typeof data.office_source === 'string' ? data.office_source : 'General Walk-In',
+    device_info: typeof data.device_info === 'string' ? data.device_info : 'unknown-device',
+    ip_address: typeof data.ip_address === 'string' ? data.ip_address : '127.0.0.1',
+    ratings: {
+      promptness: Number(ratings.promptness ?? 5),
+      courtesy: Number(ratings.courtesy ?? 5),
+      efficiency: Number(ratings.efficiency ?? 5),
+      cleanliness: Number(ratings.cleanliness ?? 5),
+    },
+  };
+}
+
+async function ensureFirestoreSeeded(): Promise<void> {
+  if (useJsonFallback()) {
+    return;
+  }
+
+  if (seedPromise) {
+    return seedPromise;
+  }
+
+  seedPromise = (async () => {
+    const firestore = getFirestoreDb();
+    const [locationsSnapshot, feedbacksSnapshot] = await Promise.all([
+      firestore.collection(COLLECTIONS.locations).limit(1).get(),
+      firestore.collection(COLLECTIONS.feedbacks).limit(1).get(),
+    ]);
+
+    if (!locationsSnapshot.empty || !feedbacksSnapshot.empty) {
+      return;
+    }
+
+    const seedData = loadSeedData();
+    const batch = firestore.batch();
+
+    for (const location of seedData.locations) {
+      const locationRef = firestore.collection(COLLECTIONS.locations).doc(location.id);
+      batch.set(locationRef, stripUndefined({ ...location, id: undefined }));
+    }
+
+    for (const feedback of seedData.feedbacks) {
+      const feedbackRef = firestore.collection(COLLECTIONS.feedbacks).doc(feedback.id);
+      batch.set(feedbackRef, stripUndefined({ ...feedback, id: undefined }));
+    }
+
+    await batch.commit();
+  })().finally(() => {
+    seedPromise = null;
+  });
+
+  await seedPromise;
+}
+
+export async function getLocations(): Promise<QRLocation[]> {
+  if (useJsonFallback()) {
+    return readJsonFallback().locations;
+  }
+
+  await ensureFirestoreSeeded();
+
+  const snapshot = await getFirestoreDb()
+    .collection(COLLECTIONS.locations)
+    .orderBy('created_at', 'asc')
+    .get();
+
+  return snapshot.docs
+    .map((doc) => mapLocationDoc(doc))
+    .filter((location): location is QRLocation => location !== null);
+}
+
+export async function getLocationById(id: string): Promise<QRLocation | null> {
+  if (useJsonFallback()) {
+    return readJsonFallback().locations.find((location) => location.id === id) ?? null;
+  }
+
+  await ensureFirestoreSeeded();
+
+  const snapshot = await getFirestoreDb().collection(COLLECTIONS.locations).doc(id).get();
+  return mapLocationDoc(snapshot);
+}
+
+export async function getLocationByToken(token: string): Promise<QRLocation | null> {
+  if (useJsonFallback()) {
+    return readJsonFallback().locations.find((location) => location.qr_token === token) ?? null;
+  }
+
+  await ensureFirestoreSeeded();
+
+  const snapshot = await getFirestoreDb()
+    .collection(COLLECTIONS.locations)
+    .where('qr_token', '==', token)
+    .limit(1)
+    .get();
+
+  if (snapshot.empty) {
+    return null;
+  }
+
+  return mapLocationDoc(snapshot.docs[0]);
+}
+
+export async function createLocation(location: QRLocation): Promise<void> {
+  if (useJsonFallback()) {
+    const db = readJsonFallback();
+    db.locations.push(location);
+    writeJsonFallback(db);
+    return;
+  }
+
+  await ensureFirestoreSeeded();
+
+  await getFirestoreDb()
+    .collection(COLLECTIONS.locations)
+    .doc(location.id)
+    .set(stripUndefined({ ...location, id: undefined }));
+}
+
+export async function setLocationStatus(
+  id: string,
+  status: QRLocation['status'],
+): Promise<QRLocation | null> {
+  if (useJsonFallback()) {
+    const db = readJsonFallback();
+    const index = db.locations.findIndex((location) => location.id === id);
+
+    if (index === -1) {
+      return null;
+    }
+
+    db.locations[index].status = status;
+    writeJsonFallback(db);
+    return db.locations[index];
+  }
+
+  await ensureFirestoreSeeded();
+
+  const locationRef = getFirestoreDb().collection(COLLECTIONS.locations).doc(id);
+  const currentSnapshot = await locationRef.get();
+
+  if (!currentSnapshot.exists) {
+    return null;
+  }
+
+  await locationRef.update({ status });
+  const updatedSnapshot = await locationRef.get();
+  return mapLocationDoc(updatedSnapshot);
+}
+
+export async function getFeedbacks(): Promise<Feedback[]> {
+  if (useJsonFallback()) {
+    return readJsonFallback().feedbacks;
+  }
+
+  await ensureFirestoreSeeded();
+
+  const snapshot = await getFirestoreDb()
+    .collection(COLLECTIONS.feedbacks)
+    .orderBy('created_at', 'asc')
+    .get();
+
+  return snapshot.docs
+    .map((doc) => mapFeedbackDoc(doc))
+    .filter((feedback): feedback is Feedback => feedback !== null);
+}
+
+export async function createFeedback(feedback: Feedback): Promise<void> {
+  if (useJsonFallback()) {
+    const db = readJsonFallback();
+    db.feedbacks.push(feedback);
+    writeJsonFallback(db);
+    return;
+  }
+
+  await ensureFirestoreSeeded();
+
+  await getFirestoreDb()
+    .collection(COLLECTIONS.feedbacks)
+    .doc(feedback.id)
+    .set(stripUndefined({ ...feedback, id: undefined }));
+}
+
+export async function getDb(): Promise<DatabaseSchema> {
+  const [locations, feedbacks] = await Promise.all([getLocations(), getFeedbacks()]);
+  return { locations, feedbacks };
 }

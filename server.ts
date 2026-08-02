@@ -8,15 +8,23 @@ import path from 'path';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import QRCode from 'qrcode';
-import { createServer as createViteServer } from 'vite';
-import { getDb, saveDb } from './server/db';
+import {
+  createFeedback,
+  createLocation,
+  getDb,
+  getFeedbacks,
+  getLocationById,
+  getLocationByToken,
+  getLocations,
+  setLocationStatus,
+} from './server/db';
 import { QRLocation, Feedback, AnalyticsSummary } from './src/types';
 
 // Load environment variables
 dotenv.config();
 
 const app = express();
-const PORT = 3000;
+const PORT = Number(process.env.PORT ?? 3000) || 3000;
 
 // Enable CORS and raw body parameters
 app.use(cors());
@@ -53,19 +61,44 @@ const rateLimiter = (req: express.Request, res: express.Response, next: express.
   next();
 };
 
+const withApiErrorBoundary = (
+  handler: (
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction,
+  ) => Promise<void>,
+): express.RequestHandler => {
+  return (req, res, next) => {
+    void handler(req, res, next).catch((error: unknown) => {
+      console.error('API route failure:', error);
+
+      if (!res.headersSent) {
+        res.status(500).json({
+          error:
+            error instanceof Error
+              ? error.message
+              : 'Failed to communicate with official administration database.',
+        });
+      }
+    });
+  };
+};
+
 // 1. API: Health Check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', serverTime: new Date().toISOString() });
 });
 
 // 2. API: Get All QR Locations
-app.get('/api/locations', (req, res) => {
-  const db = getDb();
-  res.json(db.locations);
-});
+app.get(
+  '/api/locations',
+  withApiErrorBoundary(async (req, res) => {
+    res.json(await getLocations());
+  }),
+);
 
 // 3. API: Create New QR Location (Admin)
-app.post('/api/locations', (req, res) => {
+app.post('/api/locations', withApiErrorBoundary(async (req, res) => {
   const { office_name, office_code } = req.body;
 
   if (!office_name || !office_code) {
@@ -73,11 +106,11 @@ app.post('/api/locations', (req, res) => {
     return;
   }
 
-  const db = getDb();
+  const locations = await getLocations();
   const cleanedCode = office_code.toLowerCase().replace(/[^a-z0-9_-]/g, '');
 
   // Check for duplicate office code
-  const exists = db.locations.some(loc => loc.office_code === cleanedCode);
+  const exists = locations.some(loc => loc.office_code === cleanedCode);
   if (exists) {
     res.status(400).json({ error: `Office code "${cleanedCode}" already exists.` });
     return;
@@ -96,14 +129,13 @@ app.post('/api/locations', (req, res) => {
     created_at: new Date().toISOString(),
   };
 
-  db.locations.push(newLocation);
-  saveDb(db);
+  await createLocation(newLocation);
 
   res.status(201).json(newLocation);
-});
+}));
 
 // 4. API: Toggle QR Location Status (Disable compromised codes)
-app.put('/api/locations/:id/status', (req, res) => {
+app.put('/api/locations/:id/status', withApiErrorBoundary(async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
 
@@ -112,25 +144,19 @@ app.put('/api/locations/:id/status', (req, res) => {
     return;
   }
 
-  const db = getDb();
-  const index = db.locations.findIndex(loc => loc.id === id);
-
-  if (index === -1) {
+  const updatedLocation = await setLocationStatus(id, status);
+  if (!updatedLocation) {
     res.status(404).json({ error: 'Location not found' });
     return;
   }
 
-  db.locations[index].status = status;
-  saveDb(db);
-
-  res.json(db.locations[index]);
-});
+  res.json(updatedLocation);
+}));
 
 // 5. API: Dynamic QR Code PNG Generator from token
-app.get('/api/locations/:id/qr-image', async (req, res) => {
+app.get('/api/locations/:id/qr-image', withApiErrorBoundary(async (req, res) => {
   const { id } = req.params;
-  const db = getDb();
-  const location = db.locations.find(loc => loc.id === id);
+  const location = await getLocationById(id);
 
   if (!location) {
     res.status(404).json({ error: 'Location not found' });
@@ -141,30 +167,24 @@ app.get('/api/locations/:id/qr-image', async (req, res) => {
   const host = process.env.APP_URL || `http://localhost:${PORT}`;
   const qrUrl = `${host}/form?qr=${location.qr_token}&office=${location.office_code}`;
 
-  try {
-    // Generate QR code base64 image representation with government blue color
-    const qrDataUrl = await QRCode.toDataURL(qrUrl, {
-      errorCorrectionLevel: 'H',
-      margin: 2,
-      width: 400,
-      color: {
-        dark: '#0f172a',  // deep navy
-        light: '#ffffff'  // white background
-      }
-    });
+  // Generate QR code base64 image representation with government blue color
+  const qrDataUrl = await QRCode.toDataURL(qrUrl, {
+    errorCorrectionLevel: 'H',
+    margin: 2,
+    width: 400,
+    color: {
+      dark: '#0f172a',  // deep navy
+      light: '#ffffff'  // white background
+    }
+  });
 
-    res.json({ qrDataUrl, qrUrl });
-  } catch (err) {
-    console.error('QR Generation speed failure: ', err);
-    res.status(500).json({ error: 'Failed to generate QR Code image' });
-  }
-});
+  res.json({ qrDataUrl, qrUrl });
+}));
 
 // 6. API: Validate QR Code Token for Form Autofill
-app.get('/api/locations/validate/:token', (req, res) => {
+app.get('/api/locations/validate/:token', withApiErrorBoundary(async (req, res) => {
   const { token } = req.params;
-  const db = getDb();
-  const location = db.locations.find(loc => loc.qr_token === token);
+  const location = await getLocationByToken(token);
 
   if (!location) {
     res.status(404).json({ error: 'Invalid or expired QR Token' });
@@ -177,16 +197,18 @@ app.get('/api/locations/validate/:token', (req, res) => {
   }
 
   res.json(location);
-});
+}));
 
 // 7. API: Fetch All Citizen Feedback (Admin Dashboard)
-app.get('/api/feedbacks', (req, res) => {
-  const db = getDb();
-  res.json(db.feedbacks);
-});
+app.get(
+  '/api/feedbacks',
+  withApiErrorBoundary(async (req, res) => {
+    res.json(await getFeedbacks());
+  }),
+);
 
 // 8. API: Submit Citizen Feedback
-app.post('/api/feedbacks', rateLimiter, (req, res) => {
+app.post('/api/feedbacks', rateLimiter, withApiErrorBoundary(async (req, res) => {
   const {
     category,
     comments,
@@ -213,12 +235,10 @@ app.post('/api/feedbacks', rateLimiter, (req, res) => {
     return;
   }
 
-  const db = getDb();
-
   // Validate QR Token details if supplied
-  let qrLocation: QRLocation | undefined;
+  let qrLocation: QRLocation | null = null;
   if (qr_token) {
-    qrLocation = db.locations.find(loc => loc.qr_token === qr_token);
+    qrLocation = await getLocationByToken(qr_token);
     if (!qrLocation) {
       res.status(400).json({ error: 'Submission rejected: QR Token is invalid.' });
       return;
@@ -289,21 +309,19 @@ app.post('/api/feedbacks', rateLimiter, (req, res) => {
     }
   };
 
-  db.feedbacks.push(newFeedback);
-  saveDb(db);
+  await createFeedback(newFeedback);
 
   res.status(201).json({
     success: true,
     message: 'Philippine National Police CSM feedback filed and stored securely.',
     feedback: newFeedback
   });
-});
+}));
 
 // 9. API: High-performance pre-calculated Analytics Summary
-app.get('/api/analytics', (req, res) => {
-  const db = getDb();
+app.get('/api/analytics', withApiErrorBoundary(async (req, res) => {
+  const db = await getDb();
   const feedbacks = db.feedbacks;
-  const locations = db.locations;
 
   const totalSubmissions = feedbacks.length;
   const feedbacksFromQR = feedbacks.filter(fb => fb.qr_location_id);
@@ -530,13 +548,14 @@ app.get('/api/analytics', (req, res) => {
   };
 
   res.json(summary);
-});
+}));
 
 
 // Production/Development Server Mounting using Vite Engine
 async function startServer() {
   // Vite developer middleware for rendering frontend elements dynamically
   if (process.env.NODE_ENV !== 'production') {
+    const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: { middlewareMode: true, hmr: false },
       appType: 'spa',

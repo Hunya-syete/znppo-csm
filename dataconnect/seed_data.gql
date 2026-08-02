@@ -1,0 +1,80 @@
+mutation SeedAllTables @transaction {
+  office_insertMany(data: [
+    {
+      id: "770e8400-e29b-41d4-a716-446655440001",
+      name: "Main Branch",
+      locationCode: "HQ-001",
+      description: "Headquarters",
+      createdAt: "2023-01-01T00:00:00Z"
+    },
+    {
+      id: "770e8400-e29b-41d4-a716-446655440002",
+      name: "North Branch",
+      locationCode: "NB-002",
+      description: "Satellite office",
+      createdAt: "2023-02-01T00:00:00Z"
+    }
+  ])
+  qrToken_insertMany(data: [
+    {
+      id: "880e8400-e29b-41d4-a716-446655440001",
+      tokenString: "TOKEN_A",
+      status: "ACTIVE",
+      officerName: "Alice",
+      officeId: "770e8400-e29b-41d4-a716-446655440001"
+    },
+    {
+      id: "880e8400-e29b-41d4-a716-446655440002",
+      tokenString: "TOKEN_B",
+      status: "EXPIRED",
+      officerName: "Bob",
+      officeId: "770e8400-e29b-41d4-a716-446655440002"
+    }
+  ])
+  feedback_insertMany(data: [
+    {
+      id: "990e8400-e29b-41d4-a716-446655440001",
+      rating: 5,
+      message: "Excellent service!",
+      submittedAt: "2023-03-01T12:00:00Z",
+      qrTokenId: "880e8400-e29b-41d4-a716-446655440001"
+    },
+    {
+      id: "990e8400-e29b-41d4-a716-446655440002",
+      rating: 3,
+      message: "Average experience.",
+      submittedAt: "2023-03-02T12:00:00Z",
+      qrTokenId: "880e8400-e29b-41d4-a716-446655440002"
+    }
+  ])
+  scanLog_insertMany(data: [
+    {
+      id: "660e8400-e29b-41d4-a716-446655440001",
+      timestamp: "2023-03-05T09:00:00Z",
+      ipAddress: "192.168.1.1",
+      qrTokenId: "880e8400-e29b-41d4-a716-446655440001"
+    },
+    {
+      id: "660e8400-e29b-41d4-a716-446655440002",
+      timestamp: "2023-03-06T10:00:00Z",
+      ipAddress: "192.168.1.2",
+      qrTokenId: "880e8400-e29b-41d4-a716-446655440002"
+    }
+  ])
+  adminUser_insertMany(data: [
+    {
+      id: "550e8400-e29b-41d4-a716-446655440001",
+      username: "admin_one",
+      email: "admin1@example.com",
+      passwordHash: "hash1",
+      role: "SUPER_ADMIN"
+    },
+    {
+      id: "550e8400-e29b-41d4-a716-446655440002",
+      username: "admin_two",
+      email: "admin2@example.com",
+      passwordHash: "hash2",
+      role: "EDITOR"
+    }
+  ])
+}

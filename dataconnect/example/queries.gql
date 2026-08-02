@@ -1,0 +1,160 @@
+mutation CreateOffice @auth(level: USER) {
+  office_insert(data: {
+    name: "Headquarters",
+    locationCode: "HQ-001",
+    description: "Main office location",
+    createdAt_expr: "request.time"
+  })
+}
+
+mutation UpdateOffice($id: UUID!, $name: String) @auth(level: USER) {
+  office_update(id: $id, data: { name: $name })
+}
+
+mutation DeleteOffice($id: UUID!) @auth(level: USER) {
+  office_delete(id: $id)
+}
+
+query GetOffice($id: UUID!) @auth(level: PUBLIC, insecureReason: "Publicly accessible office metadata.") {
+  office(id: $id) {
+    name
+    locationCode
+    description
+  }
+}
+
+query ListOffices @auth(level: PUBLIC, insecureReason: "Public listing of offices.") {
+  offices {
+    id
+    name
+    locationCode
+  }
+}
+
+mutation CreateQrToken($officeId: UUID!, $token: String!) @auth(level: USER) {
+  qrToken_insert(data: {
+    tokenString: $token,
+    status: "ACTIVE",
+    officeId: $officeId
+  })
+}
+
+mutation UpdateQrToken($id: UUID!, $status: String) @auth(level: USER) {
+  qrToken_update(id: $id, data: { status: $status })
+}
+
+mutation DeleteQrToken($id: UUID!) @auth(level: USER) {
+  qrToken_delete(id: $id)
+}
+
+query GetQrToken($id: UUID!) @auth(level: USER) {
+  qrToken(id: $id) {
+    tokenString
+    status
+    office { name }
+  }
+}
+
+query ListQrTokens @auth(level: USER) {
+  qrTokens {
+    id
+    tokenString
+    status
+  }
+}
+
+mutation CreateFeedback($rating: Int!, $message: String!, $qrTokenId: UUID!) @auth(level: PUBLIC, insecureReason: "Public feedback submission.") {
+  feedback_insert(data: {
+    rating: $rating,
+    message: $message,
+    qrTokenId: $qrTokenId,
+    submittedAt_expr: "request.time"
+  })
+}
+
+mutation UpdateFeedback($id: UUID!, $message: String) @auth(level: USER) {
+  feedback_update(id: $id, data: { message: $message })
+}
+
+mutation DeleteFeedback($id: UUID!) @auth(level: USER) {
+  feedback_delete(id: $id)
+}
+
+query GetFeedback($id: UUID!) @auth(level: USER) {
+  feedback(id: $id) {
+    rating
+    message
+    qrToken { tokenString }
+  }
+}
+
+query ListFeedbacks @auth(level: USER) {
+  feedbacks {
+    id
+    rating
+    submittedAt
+  }
+}
+
+mutation CreateScanLog($qrTokenId: UUID!, $ip: String!) @auth(level: PUBLIC, insecureReason: "Publicly accessible scan logging.") {
+  scanLog_insert(data: {
+    qrTokenId: $qrTokenId,
+    ipAddress: $ip,
+    timestamp_expr: "request.time"
+  })
+}
+
+mutation UpdateScanLog($id: UUID!, $ip: String) @auth(level: USER) {
+  scanLog_update(id: $id, data: { ipAddress: $ip })
+}
+
+mutation DeleteScanLog($id: UUID!) @auth(level: USER) {
+  scanLog_delete(id: $id)
+}
+
+query GetScanLog($id: UUID!) @auth(level: USER) {
+  scanLog(id: $id) {
+    timestamp
+    ipAddress
+  }
+}
+
+query ListScanLogs @auth(level: USER) {
+  scanLogs {
+    id
+    timestamp
+  }
+}
+
+mutation CreateAdminUser($username: String!, $email: String!, $role: String!) @auth(level: USER) {
+  adminUser_insert(data: {
+    username: $username,
+    email: $email,
+    passwordHash: "hidden",
+    role: $role
+  })
+}
+
+mutation UpdateAdminUser($id: UUID!, $role: String) @auth(level: USER) {
+  adminUser_update(id: $id, data: { role: $role })
+}
+
+mutation DeleteAdminUser($id: UUID!) @auth(level: USER) {
+  adminUser_delete(id: $id)
+}
+
+query GetAdminUser($id: UUID!) @auth(level: USER) {
+  adminUser(id: $id) {
+    username
+    email
+    role
+  }
+}
+
+query ListAdminUsers @auth(level: USER) {
+  adminUsers {
+    id
+    username
+    email
+  }
+}
